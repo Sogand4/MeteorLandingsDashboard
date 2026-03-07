@@ -25,6 +25,18 @@ class MeteoriteDistributionBarChart {
   initVis() {
     let vis = this;
     // Todo: Create SVG area, initialize scales and axes
+
+    vis.width =
+      vis.config.containerWidth -
+      vis.config.margin.left -
+      vis.config.margin.right;
+    vis.height =
+      vis.config.containerHeight -
+      vis.config.margin.top -
+      vis.config.margin.bottom;
+
+    vis.xScale = d3.scaleLinear().range([0, vis.width]);
+    vis.yScale = d3.scaleLinear().range([vis.height, 0]);
   }
 
   updateVis() {
