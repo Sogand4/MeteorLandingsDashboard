@@ -23,11 +23,12 @@
           –
           <input type="number" id="filter-year-max" placeholder="Max" min="860" max="2101" />
         </label>
-        <label>
+        <label class="country-filter-wrapper">
           Country
-          <select id="filter-country" class="filter-select">
-            <option value="">All countries</option>
-          </select>
+          <div class="country-search-wrap">
+            <input type="text" id="filter-country-search" placeholder="Search or select..." autocomplete="off" />
+            <ul id="filter-country-list" class="country-dropdown" aria-hidden="true"></ul>
+          </div>
         </label>
         <label>
           Map view
@@ -46,6 +47,7 @@
           <div id="main-map" class="map-view"></div>
         </section>
         <aside class="sidebar">
+          <div id="task3-country-bar" class="chart-container"></div>
           <div id="meteorite-distribution-bar-chart" class="chart-container"></div>
           <div id="mass-by-class-boxplot" class="chart-container"></div>
         </aside>
@@ -59,7 +61,13 @@
     </div>
 
     <script src="js/d3.v6.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson@3.0.2/dist/topojson.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-hexbin@0.2.2/build/d3-hexbin.min.js"></script>
     <script src="js/meteoriteDistributionBarChart.js"></script>
+    <script src="js/task3/dataUtils.js"></script>
+    <script src="js/task3/countryLandingsBarChart.js"></script>
+    <script src="js/task3/task3Map.js"></script>
+    <script src="js/task3/task3.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
