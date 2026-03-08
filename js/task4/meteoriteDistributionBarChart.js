@@ -2,8 +2,8 @@ class MeteoriteDistributionBarChart {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
-      containerWidth: 240,
-      containerHeight: 260,
+      containerWidth: _config.containerWidth || 240,
+      containerHeight: _config.containerHeight || 260,
       margin: {
         top: 30,
         right: 5,
@@ -38,7 +38,7 @@ class MeteoriteDistributionBarChart {
       .append("svg")
       .attr("width", vis.config.containerWidth)
       .attr("height", vis.config.containerHeight)
-      .attr("id", "meteorite-distribution-bar-chart-svg"); // TODO rename
+      .attr("id", "total-meteorite-discoveries-bar-chart-svg");
 
     vis.chartArea = vis.svg
       .append("g")
