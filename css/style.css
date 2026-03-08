@@ -170,10 +170,10 @@ body {
   overflow-y: auto;
 }
 
-/* Bottom row: scatterplot + temporal charts (33/66) */
+/* Bottom row: scatterplot + temporal charts (33/33/33) */
 .bottom-charts {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0;
   background: #fff;
   border-top: 1px solid #ddd;
@@ -187,18 +187,6 @@ body {
 
 .bottom-charts .chart-container:last-child {
   border-right: none;
-}
-
-.temporal-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  background: #fff;
-  overflow-y: auto;
-}
-.temporal-group > .chart-container {
-  flex: 1;
 }
 
 /* Chart containers */

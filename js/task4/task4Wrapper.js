@@ -25,7 +25,7 @@ const Task4 = {
     Task4.totalMeteoriteDiscoveriesBarChart =
       new TotalMeteoriteDiscoveriesBarChart(
         {
-          parentElement: barChartContainer,
+          parentElement: "#total-meteorite-discoveries-bar-chart",
           containerWidth: barSize.width,
           containerHeight: barSize.height,
         },

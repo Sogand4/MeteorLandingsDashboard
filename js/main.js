@@ -120,7 +120,6 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
     });
 
     Task4.init({
-      parentElement: "#task4-temporal-charts",
       barChartContainer: "#total-meteorite-discoveries-bar-chart",
       data,
     });
