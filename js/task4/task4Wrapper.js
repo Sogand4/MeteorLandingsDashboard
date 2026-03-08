@@ -4,6 +4,7 @@
  */
 const Task4 = {
   totalMeteoriteDiscoveriesBarChart: null,
+  topMeteoriteDistributionBarChart: null,
 
   getContainerSize(selector) {
     const el = document.querySelector(selector);
@@ -26,6 +27,16 @@ const Task4 = {
       new TotalMeteoriteDiscoveriesBarChart(
         {
           parentElement: "#total-meteorite-discoveries-bar-chart",
+          containerWidth: barSize.width,
+          containerHeight: barSize.height,
+        },
+        data,
+      );
+
+    Task4.topMeteoriteDistributionBarChart =
+      new TopMeteoriteDistributionBarChart(
+        {
+          parentElement: "#top-meteorite-distribution-bar-chart",
           containerWidth: barSize.width,
           containerHeight: barSize.height,
         },
