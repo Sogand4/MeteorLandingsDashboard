@@ -1,20 +1,64 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>D3 Project Starter Template</title>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meteorite Landing Data Visualization</title>
     <link rel="icon" href="data:;base64,iVBORwOKGO=" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <!-- Add HTML content, SVG drawing area, ... -->
+    <div class="dashboard">
+      <!-- Filters (compact row) -->
+      <header class="filter-bar">
+        <label>
+          Class
+          <select id="filter-class" class="filter-select">
+            <option value="">All classes</option>
+          </select>
+        </label>
+        <label>
+          Year range
+          <input type="number" id="filter-year-min" placeholder="Min" min="860" max="2101" />
+          –
+          <input type="number" id="filter-year-max" placeholder="Max" min="860" max="2101" />
+        </label>
+        <label>
+          Country
+          <select id="filter-country" class="filter-select">
+            <option value="">All countries</option>
+          </select>
+        </label>
+        <label>
+          Map view
+          <span class="map-toggle">
+            <input type="radio" name="map-mode" id="map-mode-density" value="density" checked />
+            <label for="map-mode-density">Density</label>
+            <input type="radio" name="map-mode" id="map-mode-points" value="points" />
+            <label for="map-mode-points">Points</label>
+          </span>
+        </label>
+      </header>
 
-    <div id="meteorite-distribution-bar-chart"></div>
+      <!-- Main content: map + sidebar -->
+      <main class="main-content">
+        <section class="map-container">
+          <div id="main-map" class="map-view"></div>
+        </section>
+        <aside class="sidebar">
+          <div id="meteorite-distribution-bar-chart" class="chart-container"></div>
+          <div id="mass-by-class-boxplot" class="chart-container"></div>
+        </aside>
+      </main>
 
-    <!-- D3 bundle -->
+      <!-- Bottom row: scatterplot + temporal charts -->
+      <section class="bottom-charts">
+        <div id="population-density-scatter" class="chart-container"></div>
+        <div id="temporal-charts" class="chart-container"></div>
+      </section>
+    </div>
+
     <script src="js/d3.v6.min.js"></script>
-
-    <!-- Our JS code -->
     <script src="js/meteoriteDistributionBarChart.js"></script>
     <script src="js/main.js"></script>
   </body>
