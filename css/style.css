@@ -189,6 +189,18 @@ body {
   border-right: none;
 }
 
+.temporal-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff;
+  overflow-y: auto;
+}
+.temporal-group > .chart-container {
+  flex: 1;
+}
+
 /* Chart containers */
 .chart-container {
   min-height: 180px;
