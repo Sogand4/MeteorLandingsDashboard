@@ -60,15 +60,11 @@ class TotalMeteoriteDiscoveriesBarChart {
   updateVis() {
     let vis = this;
 
-    vis.data.filter((d) => {
-      if (d.year === null) console.log("year is null");
-    });
-
     vis.yearCounts = d3
       .rollups(
         vis.data,
         (group) => group.length,
-        (d) => d.year,
+        (d) => Math.floor(d.year / 100) * 100,
       )
       .map((d) => ({
         year: d[0],
