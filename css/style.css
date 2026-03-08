@@ -4,7 +4,10 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   font-size: 14px;
   color: #333;
   background: #f5f5f5;
@@ -167,10 +170,10 @@ body {
   overflow-y: auto;
 }
 
-/* Bottom row: scatterplot + temporal charts (50/50) */
+/* Bottom row: scatterplot + temporal charts (33/66) */
 .bottom-charts {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 0;
   background: #fff;
   border-top: 1px solid #ddd;

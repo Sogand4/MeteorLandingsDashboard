@@ -80,18 +80,24 @@
         </section>
         <aside class="sidebar">
           <div id="task3-country-bar" class="chart-container"></div>
-          <div
-            id="meteorite-distribution-bar-chart"
-            class="chart-container"
-          ></div>
           <div id="mass-by-class-boxplot" class="chart-container"></div>
         </aside>
       </main>
 
       <!-- Bottom row: scatterplot + temporal charts -->
+      <h2 style="text-align: center">Temporal Charts</h2>
       <section class="bottom-charts">
         <div id="population-density-scatter" class="chart-container"></div>
-        <div id="temporal-charts" class="chart-container"></div>
+        <div id="task4-temporal-charts" class="chart-container">
+          <div
+            id="total-meteorite-discoveries-bar-chart"
+            class="chart-container"
+          ></div>
+          <div
+            id="top-meteorite-distribution-bar-chart"
+            class="chart-container"
+          ></div>
+        </div>
       </section>
     </div>
 
@@ -99,6 +105,7 @@
     <script src="https://cdn.jsdelivr.net/npm/topojson@3.0.2/dist/topojson.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-hexbin@0.2.2/build/d3-hexbin.min.js"></script>
     <script src="js/task4/meteoriteDistributionBarChart.js"></script>
+    <script src="js/task4/task4Wrapper.js"></script>
     <script src="js/task3/dataUtils.js"></script>
     <script src="js/task3/countryLandingsBarChart.js"></script>
     <script src="js/task3/task3Map.js"></script>
