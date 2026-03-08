@@ -20,14 +20,18 @@ function parseMeteoriteRow(d) {
 }
 
 function initCountrySearchFilter(data, onSelect) {
-  const countries = [...new Set(data.map((d) => d.country).filter((c) => c && String(c).trim()))].sort();
+  const countries = [
+    ...new Set(data.map((d) => d.country).filter((c) => c && String(c).trim())),
+  ].sort();
   const input = document.getElementById("filter-country-search");
   const list = document.getElementById("filter-country-list");
   if (!input || !list) return { setValue: () => {} };
 
   function filterAndShow(query) {
     const q = (query || "").trim().toLowerCase();
-    const filtered = q ? countries.filter((c) => c.toLowerCase().includes(q)) : countries;
+    const filtered = q
+      ? countries.filter((c) => c.toLowerCase().includes(q))
+      : countries;
     list.innerHTML = "";
     const clearLi = document.createElement("li");
     clearLi.className = "country-clear";
@@ -115,9 +119,10 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
       onCountrySelectExternal: syncFilterToSelection,
     });
 
-    meteoriteDistributionBarChart = new MeteoriteDistributionBarChart(
-      { parentElement: "#meteorite-distribution-bar-chart" },
-      data
-    );
+    Task4.init({
+      parentElement: "#task4-temporal-charts",
+      barChartContainer: "#total-meteorite-discoveries-bar-chart",
+      data,
+    });
   });
 });
