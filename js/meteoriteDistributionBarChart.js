@@ -35,8 +35,34 @@ class MeteoriteDistributionBarChart {
       vis.config.margin.top -
       vis.config.margin.bottom;
 
-    vis.xScale = d3.scaleLinear().range([0, vis.width]);
+    vis.xScale = d3.scaleBand().range([0, vis.width]);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
+
+    vis.xAxis = d3.axisBottom(vis.xScale);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d"));
+
+    vis.svg = d3
+      .select(vis.config.parentElement)
+      .append("svg")
+      .attr("width", vis.config.containerWidth)
+      .attr("height", vis.config.containerHeight)
+      .attr("id", "meteorite-distribution-bar-chart-svg"); // TODO rename
+
+    vis.chartArea = vis.svg
+      .append("g")
+      .attr(
+        "transform",
+        `translate(${vis.config.margin.left},${vis.config.margin.top})`,
+      );
+
+    vis.xAxisGroup = vis.chartArea
+      .append("g")
+      .attr("class", "x-axis")
+      .attr("transform", `translate(0, ${vis.height})`);
+
+    vis.yAxisGroup = vis.chartArea.append("g").attr("class", "y-axis");
+
+    vis.updateVis();
   }
 
   updateVis() {
