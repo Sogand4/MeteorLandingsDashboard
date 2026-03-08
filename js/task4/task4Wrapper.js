@@ -3,7 +3,7 @@
  * Creates the meteorite distribution bar charts and sizes it to its container.
  */
 const Task4 = {
-  meteoriteDistributionBarChart: null,
+  totalMeteoriteDiscoveriesBarChart: null,
 
   getContainerSize(selector) {
     const el = document.querySelector(selector);
@@ -22,14 +22,15 @@ const Task4 = {
 
     const barSize = Task4.getContainerSize(barChartContainer);
 
-    Task4.meteoriteDistributionBarChart = new MeteoriteDistributionBarChart(
-      {
-        parentElement: barChartContainer,
-        containerWidth: barSize.width,
-        containerHeight: barSize.height,
-      },
-      data,
-    );
+    Task4.totalMeteoriteDiscoveriesBarChart =
+      new TotalMeteoriteDiscoveriesBarChart(
+        {
+          parentElement: barChartContainer,
+          containerWidth: barSize.width,
+          containerHeight: barSize.height,
+        },
+        data,
+      );
 
     return Task4;
   },
