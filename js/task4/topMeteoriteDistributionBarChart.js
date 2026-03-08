@@ -7,8 +7,8 @@ class TopMeteoriteDistributionBarChart {
       margin: {
         top: 30,
         right: 5,
-        bottom: 20,
-        left: 30,
+        bottom: 30,
+        left: 40,
       },
     };
     this.data = data;
@@ -30,6 +30,8 @@ class TopMeteoriteDistributionBarChart {
     vis.xScale = d3.scaleBand().range([0, vis.width]);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
+    vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
+
     vis.xAxis = d3.axisBottom(vis.xScale);
     vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d"));
 
@@ -38,7 +40,7 @@ class TopMeteoriteDistributionBarChart {
       .append("svg")
       .attr("width", vis.config.containerWidth)
       .attr("height", vis.config.containerHeight)
-      .attr("id", "total-meteorite-discoveries-bar-chart-svg");
+      .attr("id", "top-meteorite-distribution-bar-chart-svg");
 
     vis.chartArea = vis.svg
       .append("g")
@@ -60,21 +62,64 @@ class TopMeteoriteDistributionBarChart {
   updateVis() {
     let vis = this;
 
-    vis.yearCounts = d3
-      .rollups(
-        vis.data,
-        (group) => group.length,
-        (d) => Math.floor(d.year / 100) * 100,
-      )
-      .map((d) => ({
-        year: d[0],
-        count: d[1],
-      }));
+    const recclassCounts = d3.rollups(
+      vis.data,
+      (group) => group.length,
+      (d) => d.recclass,
+    );
 
-    vis.yearCounts.sort((a, b) => a.year - b.year);
+    vis.topRecclasses = recclassCounts
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map((d) => d[0]);
 
-    vis.xScale.domain(vis.yearCounts.map((d) => d.year));
-    vis.yScale.domain([0, d3.max(vis.yearCounts, (d) => d.count)]);
+    vis.stackKeys = [...vis.topRecclasses, "Other"];
+
+    const processedData = vis.data.map((d) => {
+      const yearBucket = Math.floor(d.year / 100) * 100;
+      const recclassGroup = vis.topRecclasses.includes(d.recclass)
+        ? d.recclass
+        : "Other";
+
+      return {
+        yearBucket,
+        recclassGroup,
+      };
+    });
+
+    const rolled = d3.rollups(
+      processedData,
+      (group) => group.length,
+      (d) => d.yearBucket,
+      (d) => d.recclassGroup,
+    );
+
+    // Step 4: reshape into object form for d3.stack()
+    vis.stackedData = rolled.map(([yearBucket, classEntries]) => {
+      const obj = { year: yearBucket };
+
+      vis.stackKeys.forEach((key) => {
+        obj[key] = 0;
+      });
+
+      classEntries.forEach(([recclassGroup, count]) => {
+        obj[recclassGroup] = count;
+      });
+
+      return obj;
+    });
+
+    vis.stackedData.sort((a, b) => a.year - b.year);
+
+    vis.series = d3.stack().keys(vis.stackKeys)(vis.stackedData);
+
+    vis.xScale.domain(vis.stackedData.map((d) => d.year));
+    vis.yScale.domain([
+      0,
+      d3.max(vis.stackedData, (d) => d3.sum(vis.stackKeys, (key) => d[key])),
+    ]);
+
+    vis.colorScale.domain(vis.stackKeys);
 
     vis.renderVis();
   }
@@ -82,15 +127,21 @@ class TopMeteoriteDistributionBarChart {
   renderVis() {
     let vis = this;
 
-    vis.bars = vis.chartArea
-      .selectAll(".bar")
-      .data(vis.yearCounts, (d) => d.year)
+    const layer = vis.chartArea
+      .selectAll(".stack-layer")
+      .data(vis.series, (d) => d.key)
+      .join("g")
+      .attr("class", "stack-layer")
+      .attr("fill", (d) => vis.colorScale(d.key));
+
+    layer
+      .selectAll("rect")
+      .data((d) => d)
       .join("rect")
-      .attr("class", "bar")
-      .attr("x", (d) => vis.xScale(d.year))
-      .attr("y", (d) => vis.yScale(d.count))
+      .attr("x", (d) => vis.xScale(d.data.year))
+      .attr("y", (d) => vis.yScale(d[1]))
       .attr("width", vis.xScale.bandwidth())
-      .attr("height", (d) => vis.height - vis.yScale(d.count));
+      .attr("height", (d) => vis.yScale(d[0]) - vis.yScale(d[1]));
 
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);

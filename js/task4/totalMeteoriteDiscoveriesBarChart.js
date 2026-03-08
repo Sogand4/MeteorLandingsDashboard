@@ -7,8 +7,8 @@ class TotalMeteoriteDiscoveriesBarChart {
       margin: {
         top: 30,
         right: 5,
-        bottom: 20,
-        left: 30,
+        bottom: 30,
+        left: 40,
       },
     };
     this.data = data;
