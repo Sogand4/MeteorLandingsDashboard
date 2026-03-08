@@ -180,7 +180,6 @@ body {
 }
 
 .bottom-charts .chart-container {
-  padding: 1rem;
   border-right: 1px solid #eee;
   min-height: 200px;
 }
