@@ -1,10 +1,4 @@
-// TODO: abstract details of bar charts if there are other bar charts in project
 class MeteoriteDistributionBarChart {
-  /**
-   * Class constructor with initial configuration
-   * @param {Object}
-   */
-  // Todo: Add or remove parameters from the constructor as needed
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
@@ -16,7 +10,6 @@ class MeteoriteDistributionBarChart {
         bottom: 20,
         left: 30,
       },
-      // Todo: Add or remove attributes from config as needed
     };
     this.data = data;
     this.initVis();
@@ -24,7 +17,6 @@ class MeteoriteDistributionBarChart {
 
   initVis() {
     let vis = this;
-    // Todo: Create SVG area, initialize scales and axes
 
     vis.width =
       vis.config.containerWidth -
@@ -67,11 +59,44 @@ class MeteoriteDistributionBarChart {
 
   updateVis() {
     let vis = this;
-    // Todo: Prepare data and scales
+
+    vis.data.filter((d) => {
+      if (d.year === null) console.log("year is null");
+    });
+
+    vis.yearCounts = d3
+      .rollups(
+        vis.data,
+        (group) => group.length,
+        (d) => d.year,
+      )
+      .map((d) => ({
+        year: d[0],
+        count: d[1],
+      }));
+
+    vis.yearCounts.sort((a, b) => a.year - b.year);
+
+    vis.xScale.domain(vis.yearCounts.map((d) => d.year));
+    vis.yScale.domain([0, d3.max(vis.yearCounts, (d) => d.count)]);
+
+    vis.renderVis();
   }
 
   renderVis() {
     let vis = this;
-    // Todo: Bind data to visual elements, update axes
+
+    vis.bars = vis.chartArea
+      .selectAll(".bar")
+      .data(vis.yearCounts, (d) => d.year)
+      .join("rect")
+      .attr("class", "bar")
+      .attr("x", (d) => vis.xScale(d.year))
+      .attr("y", (d) => vis.yScale(d.count))
+      .attr("width", vis.xScale.bandwidth())
+      .attr("height", (d) => vis.height - vis.yScale(d.count));
+
+    vis.xAxisGroup.call(vis.xAxis);
+    vis.yAxisGroup.call(vis.yAxis);
   }
 }
