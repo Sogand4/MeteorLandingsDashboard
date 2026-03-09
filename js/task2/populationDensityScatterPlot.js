@@ -31,7 +31,7 @@ class PopulationDensityScatterPlot {
       .append("g")
       .attr(
         "transform",
-        `translate(${vis.config.margin.left},${vis.config.margin.top})`
+        `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
 
     vis.svg
@@ -62,10 +62,12 @@ class PopulationDensityScatterPlot {
       .attr("class", "axis-label")
       .attr(
         "transform",
-        `translate(22, ${vis.config.containerHeight / 2}) rotate(-90)`
+        `translate(22, ${vis.config.containerHeight / 2}) rotate(-90)`,
       )
       .attr("text-anchor", "middle")
       .text("Population Density");
+
+    vis.updateVis();
   }
 
   wrangleData() {
@@ -77,20 +79,20 @@ class PopulationDensityScatterPlot {
           (d) =>
             d.country &&
             d.population_density != null &&
-            !isNaN(d.population_density)
+            !isNaN(d.population_density),
         ),
         (values) => ({
           landings: values.length,
           population_density: values[0].population_density,
         }),
-        (d) => d.country
+        (d) => d.country,
       )
       .map(([country, values]) => ({ country, ...values }))
       .filter(
         (d) =>
           d.landings <= 7000 &&
           d.population_density > 0 &&
-          d.population_density <= 850
+          d.population_density <= 850,
       )
       .sort((a, b) => a.landings - b.landings);
 
@@ -103,7 +105,10 @@ class PopulationDensityScatterPlot {
 
     vis.xScale = d3
       .scaleLinear()
-      .domain([0, Math.max(7000, d3.max(vis.chartData, (d) => d.landings) || 1)])
+      .domain([
+        0,
+        Math.max(7000, d3.max(vis.chartData, (d) => d.landings) || 1),
+      ])
       .nice()
       .range([0, vis.width]);
 
@@ -123,7 +128,7 @@ class PopulationDensityScatterPlot {
     const vis = this;
 
     vis.xAxisGroup.call(
-      d3.axisBottom(vis.xScale).ticks(7).tickFormat(d3.format("~s"))
+      d3.axisBottom(vis.xScale).ticks(7).tickFormat(d3.format("~s")),
     );
     vis.yAxisGroup.call(d3.axisLeft(vis.yScale).ticks(8));
 
@@ -149,8 +154,8 @@ class PopulationDensityScatterPlot {
       .text(
         (d) =>
           `${d.country}\nLandings: ${d.landings}\nPopulation density: ${d3.format(
-            ".1f"
-          )(d.population_density)}`
+            ".1f",
+          )(d.population_density)}`,
       );
   }
 }

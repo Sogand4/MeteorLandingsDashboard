@@ -19,23 +19,55 @@
         </label>
         <label>
           Year range
-          <input type="number" id="filter-year-min" placeholder="Min" min="860" max="2101" />
+          <input
+            type="number"
+            id="filter-year-min"
+            placeholder="Min"
+            min="860"
+            max="2101"
+          />
           –
-          <input type="number" id="filter-year-max" placeholder="Max" min="860" max="2101" />
+          <input
+            type="number"
+            id="filter-year-max"
+            placeholder="Max"
+            min="860"
+            max="2101"
+          />
         </label>
         <label class="country-filter-wrapper">
           Country
           <div class="country-search-wrap">
-            <input type="text" id="filter-country-search" placeholder="Search or select..." autocomplete="off" />
-            <ul id="filter-country-list" class="country-dropdown" aria-hidden="true"></ul>
+            <input
+              type="text"
+              id="filter-country-search"
+              placeholder="Search or select..."
+              autocomplete="off"
+            />
+            <ul
+              id="filter-country-list"
+              class="country-dropdown"
+              aria-hidden="true"
+            ></ul>
           </div>
         </label>
         <label>
           Map view
           <span class="map-toggle">
-            <input type="radio" name="map-mode" id="map-mode-density" value="density" checked />
+            <input
+              type="radio"
+              name="map-mode"
+              id="map-mode-density"
+              value="density"
+              checked
+            />
             <label for="map-mode-density">Density</label>
-            <input type="radio" name="map-mode" id="map-mode-points" value="points" />
+            <input
+              type="radio"
+              name="map-mode"
+              id="map-mode-points"
+              value="points"
+            />
             <label for="map-mode-points">Points</label>
           </span>
         </label>
@@ -48,7 +80,6 @@
         </section>
         <aside class="sidebar">
           <div id="task3-country-bar" class="chart-container"></div>
-          <div id="meteorite-distribution-bar-chart" class="chart-container"></div>
           <div id="mass-by-class-boxplot" class="chart-container"></div>
         </aside>
       </main>
@@ -56,15 +87,25 @@
       <!-- Bottom row: scatterplot + temporal charts -->
       <section class="bottom-charts">
         <div id="population-density-scatter" class="chart-container"></div>
-        <div id="temporal-charts" class="chart-container"></div>
+        <div
+          id="total-meteorite-discoveries-bar-chart"
+          class="chart-container"
+        ></div>
+        <div
+          id="top-meteorite-distribution-bar-chart"
+          class="chart-container"
+        ></div>
       </section>
     </div>
 
     <script src="js/d3.v6.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/topojson@3.0.2/dist/topojson.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/d3-hexbin@0.2.2/build/d3-hexbin.min.js"></script>
-    <script src="js/meteoriteDistributionBarChart.js"></script>
-    <script src="js/populationDensityScatterPlot.js"></script>
+    <script src="js/task4/totalMeteoriteDiscoveriesBarChart.js"></script>
+    <script src="js/task4/topMeteoriteDistributionBarChart.js"></script>
+    <script src="js/task4/task4Wrapper.js"></script>
+    <script src="js/task2/populationDensityScatterPlot.js"></script>
+    <script src="js/task2/task2Wrapper.js"></script>
     <script src="js/task3/dataUtils.js"></script>
     <script src="js/task3/countryLandingsBarChart.js"></script>
     <script src="js/task3/task3Map.js"></script>
