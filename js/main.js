@@ -126,7 +126,12 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
     });
 
     Task2.init({
-      barChartContainer: "#population-density-scatter",
+      scatterplotContainer: "#population-density-scatter",
+      data,
+    });
+
+    Task1.init({
+      boxplotContainer: "#mass-by-class-boxplot",
       data,
     });
   });
