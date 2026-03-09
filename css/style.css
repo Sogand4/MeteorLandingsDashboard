@@ -236,3 +236,52 @@ body {
     align-items: stretch;
   }
 }
+
+/* Population density scatterplot */
+#population-density-scatter {
+  background: #fff;
+  justify-content: center;
+}
+
+#population-density-scatter svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.chart-title {
+  font-size: 18px;
+  font-weight: 600;
+  fill: #111;
+}
+
+.axis-label {
+  font-size: 13px;
+  font-weight: 500;
+  fill: #222;
+}
+
+.axis path,
+.axis line {
+  stroke: #777;
+}
+
+.axis text {
+  fill: #444;
+  font-size: 11px;
+}
+
+.grid-line-x {
+  stroke: #e6e6e6;
+  stroke-width: 1;
+}
+
+.scatter-point {
+  fill: #111;
+  opacity: 0.85;
+}
+
+.chart-note {
+  font-size: 11px;
+  fill: #666;
+}
