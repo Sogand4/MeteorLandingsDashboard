@@ -27,13 +27,13 @@ class TopMeteoriteDistributionBarChart {
       vis.config.margin.top -
       vis.config.margin.bottom;
 
-    vis.xScale = d3.scaleBand().range([0, vis.width]);
-    vis.yScale = d3.scaleLinear().range([vis.height, 0]);
+    vis.xScale = d3.scaleBand().range([0, vis.width]).padding(0.15);
+    vis.yScale = d3.scaleLinear().range([vis.height, 0]).domain([0, 1]);
 
     vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d")).ticks(5);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format(".0%")).ticks(5);
 
     vis.svg = d3
       .select(vis.config.parentElement)
@@ -123,15 +123,19 @@ class TopMeteoriteDistributionBarChart {
       return obj;
     });
 
+    vis.stackedData.forEach((d) => {
+      const total = d3.sum(vis.stackKeys, (key) => d[key]);
+
+      vis.stackKeys.forEach((key) => {
+        d[key] = d[key] / total;
+      });
+    });
+
     vis.stackedData.sort((a, b) => a.year - b.year);
 
     vis.series = d3.stack().keys(vis.stackKeys)(vis.stackedData);
 
     vis.xScale.domain(vis.stackedData.map((d) => d.year));
-    vis.yScale.domain([
-      0,
-      d3.max(vis.stackedData, (d) => d3.sum(vis.stackKeys, (key) => d[key])),
-    ]);
 
     vis.colorScale.domain(vis.stackKeys);
 

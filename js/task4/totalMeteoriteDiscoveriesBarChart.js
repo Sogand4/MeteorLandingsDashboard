@@ -27,7 +27,7 @@ class TotalMeteoriteDiscoveriesBarChart {
       vis.config.margin.top -
       vis.config.margin.bottom;
 
-    vis.xScale = d3.scaleBand().range([0, vis.width]);
+    vis.xScale = d3.scaleBand().range([0, vis.width]).padding(0.15);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
