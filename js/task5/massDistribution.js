@@ -14,7 +14,7 @@ class MassDistributionMap {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 600,
       containerHeight: _config.containerHeight || 400,
-      margin: { top: 100, right: 10, bottom: 10, left: 10 },
+      margin: { top: 20, right: 20, bottom: 20, left: 20 },
       topN: 7, // top 7 classes get distinct hue; rest will be under "Other"
     };
     this.data = data;
@@ -71,7 +71,7 @@ class MassDistributionMap {
 
     vis.svg.append("text")
       .attr("x", vis.width / 2)
-      .attr("y", -2)
+      .attr("y", vis.config.margin.top / 2)
       .attr("text-anchor", "middle")
       .attr("font-size", 20)
       .attr("font-weight", "bold")
