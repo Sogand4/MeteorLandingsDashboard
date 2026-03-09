@@ -100,10 +100,12 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
   let countryFilterRef = null;
 
   const applyCountryFilter = (country) => {
-    if (Task3.barChart) Task3.barChart.setSelectedCountry(country);
-    if (Task3.map) Task3.map.setSelectedCountry(country);
-    Task3.map?.update(data);
-    Task3.barChart?.update(data);
+  if (MapWrapper.barChart) MapWrapper.barChart.setSelectedCountry(country);
+  if (MapWrapper.densityMap) MapWrapper.densityMap.setSelectedCountry(country);
+  if (MapWrapper.pointsMap) MapWrapper.pointsMap.setSelectedCountry(country);
+  MapWrapper.densityMap?.update(data);
+  MapWrapper.pointsMap?.update(data);
+  MapWrapper.barChart?.update(data);
   };
 
   const syncFilterToSelection = (country) => {
@@ -113,7 +115,7 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
   countryFilterRef = initCountrySearchFilter(data, applyCountryFilter);
 
   requestAnimationFrame(() => {
-    Task3.init({
+    MapWrapper.init({
       mapContainer: "#main-map",
       barChartContainer: "#task3-country-bar",
       data,

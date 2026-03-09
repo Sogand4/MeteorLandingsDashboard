@@ -120,7 +120,8 @@ body {
 }
 
 /* Map tooltip */
-.task3-map-tooltip {
+.task3-map-tooltip,
+.task5-map-tooltip {
   padding: 10px 14px;
   background: rgba(0, 0, 0, 0.9);
   color: #fff;
@@ -132,7 +133,8 @@ body {
   line-height: 1.5;
 }
 
-.task3-map-tooltip strong {
+.task3-map-tooltip strong,
+.task5-map-tooltip strong {
   color: #fff;
 }
 

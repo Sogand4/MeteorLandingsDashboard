@@ -2,7 +2,7 @@
  * Task 3 – Shared data utilities
  * Used by Task3Map and CountryLandingsBarChart to avoid duplication.
  */
-const Task3DataUtils = {
+const mapUtils = {
   /** Remove number suffix (e.g. " 001") and parenthesized year (e.g. " (2003)") from meteorite names */
   cleanMeteoriteName(name) {
     if (!name || typeof name !== "string") return "";
@@ -35,4 +35,17 @@ const Task3DataUtils = {
   hasCountry(d) {
     return d.country != null && String(d.country).trim() !== "";
   },
+
+  /** Loads and returns world country features from the CDN, or null on failure. */
+  async loadWorldMap() {
+  try {
+    const world = await d3.json(
+      "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
+    );
+    return topojson.feature(world, world.objects.countries).features;
+  } catch (e) {
+    console.warn("Could not load world map:", e);
+    return null;
+  }
+},
 };
