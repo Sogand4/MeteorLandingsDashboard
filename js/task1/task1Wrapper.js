@@ -18,9 +18,9 @@ const Task1 = {
   },
 
   init(config) {
-    const { chartContainer, data } = config;
+    const { boxplotContainer, data } = config;
 
-    const plotSize = Task1.getContainerSize(chartContainer);
+    const plotSize = Task1.getContainerSize(boxplotContainer);
 
     Task1.massByClassBoxPlot = new MassByClassBoxPlot(
       {

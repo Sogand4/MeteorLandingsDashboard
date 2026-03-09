@@ -131,7 +131,7 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
     });
 
     Task1.init({
-      barChartContainer: "#mass-by-class-boxplot",
+      boxplotContainer: "#mass-by-class-boxplot",
       data,
     });
   });

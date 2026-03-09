@@ -79,7 +79,10 @@ class MassByClassBoxPlot {
       .padding(0.3);
 
     vis.xAxis = d3.axisBottom(vis.xScale);
-    vis.yAxis = d3.axisLeft(vis.yScale).ticks(5).tickFormat(d3.format("~s"));
+    vis.yAxis = d3
+      .axisLeft(vis.yScale)
+      .tickValues(d3.range(-2, 8).map((d) => 10 ** d))
+      .tickFormat(d3.format(".2f"));
 
     vis.svg = vis.container
       .append("svg")
