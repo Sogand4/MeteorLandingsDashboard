@@ -18,9 +18,9 @@ const Task2 = {
   },
 
   init(config) {
-    const { barChartContainer, data } = config;
+    const { scatterplotContainer, data } = config;
 
-    const plotSize = Task2.getContainerSize(barChartContainer);
+    const plotSize = Task2.getContainerSize(scatterplotContainer);
 
     Task2.populationDensityScatterPlot = new PopulationDensityScatterPlot(
       {
