@@ -85,7 +85,7 @@ const MapWrapper = {
 
     // Wire toggle radios
     document.querySelectorAll("input[name='map-mode']").forEach((radio) => {
-      radio.addEventListener("change", (e) => {
+      radio.addEventListener("click", (e) => {
         MapWrapper.setMode(e.target.value);
       });
     });

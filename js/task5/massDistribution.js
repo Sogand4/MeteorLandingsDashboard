@@ -151,7 +151,7 @@ class MassDistributionMap {
 
     vis.radiusScale = d3.scaleLinear()
       .domain([logMin, logMax])
-      .range([1, 18])
+      .range([1, 15])
       .clamp(true);
   }
 
