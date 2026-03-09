@@ -46,7 +46,7 @@ class Task3CountryLandingsBarChart {
 
   wrangleData() {
     const vis = this;
-    const valid = vis.data.filter(Task3DataUtils.hasCountry);
+    const valid = vis.data.filter(mapUtils.hasCountry);
     const counts = d3.rollup(valid, (v) => v.length, (d) => d.country);
     const sorted = [...counts.entries()]
       .sort((a, b) => b[1] - a[1])

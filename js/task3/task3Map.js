@@ -32,11 +32,13 @@ class Task3Map {
       vis.config.margin.top -
       vis.config.margin.bottom;
 
-    vis.svg = d3
+    vis.svgRoot = d3
       .select(vis.config.parentElement)
       .append("svg")
       .attr("width", vis.config.containerWidth)
-      .attr("height", vis.config.containerHeight)
+      .attr("height", vis.config.containerHeight);
+
+    vis.svg = vis.svgRoot
       .append("g")
       .attr(
         "transform",
@@ -58,21 +60,12 @@ class Task3Map {
   }
 
   async loadWorldMap() {
-    const vis = this;
-    try {
-      const world = await d3.json(
-        "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
-      );
-      vis.countries = topojson.feature(world, world.objects.countries).features;
-    } catch (e) {
-      console.warn("Task3Map: could not load world map, using graticule:", e);
-      vis.countries = null;
-    }
-  }
+  this.countries = await mapUtils.loadWorldMap();
+}
 
   wrangleData() {
     const vis = this;
-    let filtered = vis.data.filter(Task3DataUtils.hasValidCoords);
+    let filtered = vis.data.filter(mapUtils.hasValidCoords);
 
     if (vis.selectedCountry) {
       filtered = filtered.filter((d) => d.country === vis.selectedCountry);
@@ -80,7 +73,7 @@ class Task3Map {
 
     vis.filteredData = filtered.map((d) => ({
       ...d,
-      lon: Task3DataUtils.normalizeLon(d.reclong),
+      lon: mapUtils.normalizeLon(d.reclong),
       lat: d.reclat,
     }));
   }
@@ -214,7 +207,7 @@ class Task3Map {
 
         const cleanNames = [
           ...new Set(
-            d.map((p) => Task3DataUtils.cleanMeteoriteName(p.name)).filter(Boolean)
+            d.map((p) => mapUtils.cleanMeteoriteName(p.name)).filter(Boolean)
           ),
         ];
         const maxNames = 8;
@@ -328,6 +321,13 @@ class Task3Map {
 
   setSelectedCountry(country) {
     this.selectedCountry = country;
+  }
+
+  show() {
+    if (this.svgRoot) this.svgRoot.style("display", null);
+  }
+  hide() {
+    if (this.svgRoot) this.svgRoot.style("display", "none");
   }
 
   update(data) {
