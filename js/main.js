@@ -125,11 +125,9 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
       data,
     });
 
-    populationDensityScatterPlot = new PopulationDensityScatterPlot(
-      { parentElement: "#population-density-scatter" },
+    Task2.init({
+      barChartContainer: "#population-density-scatter",
       data,
-    );
-
-    populationDensityScatterPlot.updateVis();
+    });
   });
 });
