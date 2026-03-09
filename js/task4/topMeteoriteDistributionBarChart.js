@@ -5,7 +5,7 @@ class TopMeteoriteDistributionBarChart {
       containerWidth: _config.containerWidth || 240,
       containerHeight: _config.containerHeight || 260,
       margin: {
-        top: 30,
+        top: 45,
         right: 5,
         bottom: 50,
         left: 40,
@@ -32,8 +32,8 @@ class TopMeteoriteDistributionBarChart {
 
     vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
-    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 100}`);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d"));
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d")).ticks(5);
 
     vis.svg = d3
       .select(vis.config.parentElement)
@@ -50,7 +50,7 @@ class TopMeteoriteDistributionBarChart {
       .attr("text-anchor", "middle")
       .style("font-size", "12px")
       .style("font-weight", "600")
-      .text("Meteorite Recclass Distribution by Century");
+      .text("Top Meteorite Recclass Distribution by Century");
 
     vis.chartArea = vis.svg
       .append("g")
@@ -69,10 +69,7 @@ class TopMeteoriteDistributionBarChart {
     vis.legendGroup = vis.svg
       .append("g")
       .attr("class", "legend")
-      .attr(
-        "transform",
-        `translate(${vis.config.margin.left}, ${vis.config.margin.top - 18})`,
-      );
+      .attr("transform", `translate(${vis.config.containerWidth / 4}, 38)`);
 
     vis.updateVis();
   }

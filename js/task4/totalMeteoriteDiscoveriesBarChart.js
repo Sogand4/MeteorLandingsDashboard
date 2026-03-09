@@ -5,7 +5,7 @@ class TotalMeteoriteDiscoveriesBarChart {
       containerWidth: _config.containerWidth || 240,
       containerHeight: _config.containerHeight || 260,
       margin: {
-        top: 30,
+        top: 45,
         right: 5,
         bottom: 50,
         left: 40,
@@ -30,8 +30,8 @@ class TotalMeteoriteDiscoveriesBarChart {
     vis.xScale = d3.scaleBand().range([0, vis.width]);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
-    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 100}`);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d"));
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d")).ticks(5);
 
     vis.svg = d3
       .select(vis.config.parentElement)
@@ -39,6 +39,16 @@ class TotalMeteoriteDiscoveriesBarChart {
       .attr("width", vis.config.containerWidth)
       .attr("height", vis.config.containerHeight)
       .attr("id", "total-meteorite-discoveries-bar-chart-svg");
+
+    vis.svg
+      .append("text")
+      .attr("class", "chart-title")
+      .attr("x", vis.config.containerWidth / 2)
+      .attr("y", 18)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("font-weight", "600")
+      .text("Total Meteorite Discoveries Per Century");
 
     vis.chartArea = vis.svg
       .append("g")
