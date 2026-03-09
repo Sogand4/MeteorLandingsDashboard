@@ -5,6 +5,7 @@
  * References: UBC InfoVis 447 Tutorial 1 (Intro to D3) – d3.csv
  */
 let meteoriteDistributionBarChart;
+let populationDensityScatterPlot;
 
 function parseMeteoriteRow(d) {
   return {
@@ -119,5 +120,12 @@ d3.csv("data/meteorite_with_country_population_cleaned.csv").then((raw) => {
       { parentElement: "#meteorite-distribution-bar-chart" },
       data
     );
+
+    populationDensityScatterPlot = new PopulationDensityScatterPlot(
+      { parentElement: "#population-density-scatter" },
+      data
+    );
+
+    populationDensityScatterPlot.updateVis();
   });
 });
