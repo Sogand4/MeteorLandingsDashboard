@@ -7,7 +7,7 @@ class TotalMeteoriteDiscoveriesBarChart {
       margin: {
         top: 30,
         right: 5,
-        bottom: 30,
+        bottom: 50,
         left: 40,
       },
     };
@@ -30,7 +30,7 @@ class TotalMeteoriteDiscoveriesBarChart {
     vis.xScale = d3.scaleBand().range([0, vis.width]);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
-    vis.xAxis = d3.axisBottom(vis.xScale);
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 100}`);
     vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d"));
 
     vis.svg = d3
@@ -94,5 +94,10 @@ class TotalMeteoriteDiscoveriesBarChart {
 
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);
+
+    vis.xAxisGroup
+      .selectAll("text")
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
   }
 }

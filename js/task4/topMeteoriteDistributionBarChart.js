@@ -7,7 +7,7 @@ class TopMeteoriteDistributionBarChart {
       margin: {
         top: 30,
         right: 5,
-        bottom: 30,
+        bottom: 50,
         left: 40,
       },
     };
@@ -32,7 +32,7 @@ class TopMeteoriteDistributionBarChart {
 
     vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
-    vis.xAxis = d3.axisBottom(vis.xScale);
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 100}`);
     vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d"));
 
     vis.svg = d3
@@ -41,6 +41,16 @@ class TopMeteoriteDistributionBarChart {
       .attr("width", vis.config.containerWidth)
       .attr("height", vis.config.containerHeight)
       .attr("id", "top-meteorite-distribution-bar-chart-svg");
+
+    vis.svg
+      .append("text")
+      .attr("class", "chart-title")
+      .attr("x", vis.config.containerWidth / 2)
+      .attr("y", 18)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .style("font-weight", "600")
+      .text("Meteorite Recclass Distribution by Century");
 
     vis.chartArea = vis.svg
       .append("g")
@@ -55,6 +65,14 @@ class TopMeteoriteDistributionBarChart {
       .attr("transform", `translate(0, ${vis.height})`);
 
     vis.yAxisGroup = vis.chartArea.append("g").attr("class", "y-axis");
+
+    vis.legendGroup = vis.svg
+      .append("g")
+      .attr("class", "legend")
+      .attr(
+        "transform",
+        `translate(${vis.config.margin.left}, ${vis.config.margin.top - 18})`,
+      );
 
     vis.updateVis();
   }
@@ -94,7 +112,6 @@ class TopMeteoriteDistributionBarChart {
       (d) => d.recclassGroup,
     );
 
-    // Step 4: reshape into object form for d3.stack()
     vis.stackedData = rolled.map(([yearBucket, classEntries]) => {
       const obj = { year: yearBucket };
 
@@ -143,7 +160,37 @@ class TopMeteoriteDistributionBarChart {
       .attr("width", vis.xScale.bandwidth())
       .attr("height", (d) => vis.yScale(d[0]) - vis.yScale(d[1]));
 
+    const legendItems = vis.legendGroup
+      .selectAll(".legend-item")
+      .data(vis.stackKeys, (d) => d)
+      .join("g")
+      .attr("class", "legend-item")
+      .attr("transform", (d, i) => `translate(${i * 55}, 0)`);
+
+    legendItems
+      .selectAll("rect")
+      .data((d) => [d])
+      .join("rect")
+      .attr("width", 10)
+      .attr("height", 10)
+      .attr("y", -10)
+      .attr("fill", (d) => vis.colorScale(d));
+
+    legendItems
+      .selectAll("text")
+      .data((d) => [d])
+      .join("text")
+      .attr("x", 14)
+      .attr("y", -1)
+      .style("font-size", "10px")
+      .text((d) => d);
+
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);
+
+    vis.xAxisGroup
+      .selectAll("text")
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
   }
 }
