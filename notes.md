@@ -1,10 +1,35 @@
-Revised Task 3:
-> {identify, spatial hotspots, (reclat, reclong), derived: count per geolocation bin}
-> Users identify geographic regions with high meteorite landing concentration. A hexbinned heatmap encodes count per spatial bin. A linked bar chart shows landing count by country; selecting a country highlights its regions on the map and vice versa. Supporting interactions (year filter, class filter) help isolate patterns in time and type.
+## Feedback Summary
 
-Revised Vis 3:
-> View 1: A single geographic heatmap. The map is divided into hexbins; each bin’s color encodes the number of landings in that region (sequential color scale from low to high density). No point-level coloring by country.
-> View 2: Bar chart of landing count by country (top N + “Others” expandable). Bidirectional linking: selecting a country highlights its bins on the map; brushing or clicking bins highlights the corresponding country.
-> Legend: Explains that color = count per spatial bin and that hexbins summarize landing density.
-> Conflict avoidance: Country is represented by position (map) and by bar selection, not by color on the map, so the density encoding stays clear.
+### Data & Scaling
+- **Null island (0, 0):** Remove from map; encode as "unknown" elsewhere
+- **Outliers:** Map is skewed by outliers; filter or encode separately
+- **Log scaling:** Consider log-scale for color encoding; think about when to log vs filter for usability
+- **Date range:** Don't show data before 1900 or in the future
 
+### Map
+- **Color scale:** Consider log scaling for density
+- **White space:** Reduce white pixels within charts
+- **Aggregation:** Aggregate data points + scaling (e.g. class on map)
+
+### Boxplot
+- **Number of boxes:** Show more boxes (3–4, even 10 is fine)
+- **Class hierarchy:** Consider hierarchical structures for classes; keep dropdown for classes outside top 10
+- **Purpose:** Help users pick and compare more classes
+
+### Bar Charts
+- **X scale:** Fix x scale
+- **Country bar:** Consider mini legend on the chart to save space
+- **Layout:** Sideways bar chart for better information density
+- **Others:** Make it clickable to expand/show other countries
+
+### Scatterplot
+- Use log scale where appropriate
+
+### Layout & Linking
+- **Fit:** All views must fit on screen at once
+- **Bidirectional linking:** At least two views must be bidirectionally linked and visible side by side
+- **Priority:** Consider reserving bidirectional linking for views where it adds most value (e.g. Vis 4)
+
+### General
+- Match visualizations to data characteristics
+- Focus on pattern over decade
