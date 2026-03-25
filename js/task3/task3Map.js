@@ -7,7 +7,9 @@
  * - Bivariate Hexbin Map (Bostock): https://gist.github.com/mbostock/4330486
  * - D3 Hexbin Map: https://observablehq.com/@d3/hexbin-map
  */
-class Task3Map {
+import mapUtils from '../utils/mapUtils';
+
+export default class Task3Map {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
@@ -186,7 +188,7 @@ class Task3Map {
           .map(([c, n]) => `${c}: ${n}`)
           .join(', ');
 
-        const years = d.map((p) => p.year).filter((y) => y != null && !isNaN(y));
+        const years = d.map((p) => p.year).filter((y) => y != null && !Number.isNaN(y));
         const yearRange = years.length > 0
           ? `${Math.min(...years)} – ${Math.max(...years)}`
           : 'N/A';

@@ -1,4 +1,4 @@
-class MassByClassBoxPlot {
+export default class MassByClassBoxPlot {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,

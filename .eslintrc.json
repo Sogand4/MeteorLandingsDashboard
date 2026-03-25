@@ -12,5 +12,8 @@
     "d3": "readonly",
     "topojson": "readonly"
   },
-  "rules": {}
+  "rules": {
+    "no-param-reassign": "off",
+    "no-plusplus":"off"
+  }
 }

@@ -1,4 +1,4 @@
-class TopMeteoriteDistributionBarChart {
+export default class TopMeteoriteDistributionBarChart {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
@@ -125,7 +125,7 @@ class TopMeteoriteDistributionBarChart {
       const total = d3.sum(vis.stackKeys, (key) => d[key]);
 
       vis.stackKeys.forEach((key) => {
-        d[key] = d[key] / total;
+        d[key] /= total;
       });
     });
 

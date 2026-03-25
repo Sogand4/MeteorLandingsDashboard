@@ -6,6 +6,10 @@
  * References:
  * - UBC InfoVis 447 Tutorial 5 (Multiple views and advanced interactivity)
  */
+import Task3CountryLandingsBarChart from './countryLandingsBarChart';
+import Task3Map from './task3Map';
+import MassDistributionMap from '../task5/massDistribution';
+
 const MapWrapper = {
   densityMap: null,
   pointsMap: null,
@@ -98,3 +102,5 @@ const MapWrapper = {
     }));
   },
 };
+
+export default MapWrapper;

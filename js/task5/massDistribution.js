@@ -8,7 +8,9 @@
  * - UBC InfoVis 447 Tutorial 6 (Geographic maps): d3.geoPath, projection
  * - VAD Chapter 5: Marks and channels – area size for quantitative, hue for categorical
  */
-class MassDistributionMap {
+import mapUtils from '../utils/mapUtils';
+
+export default class MassDistributionMap {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,

@@ -3,7 +3,8 @@
  * Used by Task3Map and CountryLandingsBarChart to avoid duplication.
  */
 const mapUtils = {
-  /** Remove number suffix (e.g. " 001") and parenthesized year (e.g. " (2003)") from meteorite names */
+  /** Remove number suffix (e.g. " 001")
+   * and parenthesized year (e.g. " (2003)") from meteorite names */
   cleanMeteoriteName(name) {
     if (!name || typeof name !== 'string') return '';
     return name
@@ -15,7 +16,7 @@ const mapUtils = {
 
   /** Longitude outside [-180,180] causes projection issues. Normalize for display. */
   normalizeLon(lon) {
-    if (lon == null || isNaN(lon)) return lon;
+    if (lon == null || Number.isNaN(lon)) return lon;
     if (lon > 180) return lon - 360;
     if (lon < -180) return lon + 360;
     return lon;
@@ -25,9 +26,9 @@ const mapUtils = {
   hasValidCoords(d) {
     return (
       d.reclat != null
-      && !isNaN(d.reclat)
+      && !Number.isNaN(d.reclat)
       && d.reclong != null
-      && !isNaN(d.reclong)
+      && !Number.isNaN(d.reclong)
     );
   },
 
@@ -49,3 +50,5 @@ const mapUtils = {
     }
   },
 };
+
+export default mapUtils;

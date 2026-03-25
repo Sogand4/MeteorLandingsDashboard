@@ -2,6 +2,9 @@
  * Task 4 – Orchestrator
  * Creates the meteorite distribution bar charts and sizes it to its container.
  */
+import TopMeteoriteDistributionBarChart from './topMeteoriteDistributionBarChart';
+import TotalMeteoriteDiscoveriesBarChart from './totalMeteoriteDiscoveriesBarChart';
+
 const Task4 = {
   totalMeteoriteDiscoveriesBarChart: null,
   topMeteoriteDistributionBarChart: null,

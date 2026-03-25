@@ -7,7 +7,9 @@
  * - UBC InfoVis 447 Tutorial 3 (Data joins): selectAll().data().join()
  * - UBC InfoVis 447 Tutorial 5 (Multiple views and advanced interactivity): linking
  */
-class Task3CountryLandingsBarChart {
+import mapUtils from '../utils/mapUtils';
+
+export default class Task3CountryLandingsBarChart {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,

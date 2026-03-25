@@ -1,4 +1,4 @@
-class PopulationDensityScatterPlot {
+export default class PopulationDensityScatterPlot {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
@@ -78,7 +78,7 @@ class PopulationDensityScatterPlot {
         vis.data.filter(
           (d) => d.country
             && d.population_density != null
-            && !isNaN(d.population_density),
+            && !Number.isNaN(d.population_density),
         ),
         (values) => ({
           landings: values.length,

@@ -1,4 +1,4 @@
-class TotalMeteoriteDiscoveriesBarChart {
+export default class TotalMeteoriteDiscoveriesBarChart {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
