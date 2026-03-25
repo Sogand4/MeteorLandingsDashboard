@@ -4,8 +4,10 @@
  *
  * References: UBC InfoVis 447 Tutorial 1 (Intro to D3) – d3.csv
  */
-let meteoriteDistributionBarChart;
-let populationDensityScatterPlot;
+import MapWrapper from './task3/mapWrapper.js';
+import Task4 from './task4/task4Wrapper.js';
+import Task2 from './task2/task2Wrapper.js';
+import Task1 from './task1/task1Wrapper.js';
 
 function parseMeteoriteRow(d) {
   return {

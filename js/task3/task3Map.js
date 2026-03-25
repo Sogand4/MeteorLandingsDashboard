@@ -7,7 +7,7 @@
  * - Bivariate Hexbin Map (Bostock): https://gist.github.com/mbostock/4330486
  * - D3 Hexbin Map: https://observablehq.com/@d3/hexbin-map
  */
-import mapUtils from '../utils/mapUtils';
+import mapUtils from '../utils/mapUtils.js';
 
 export default class Task3Map {
   constructor(_config, data) {
