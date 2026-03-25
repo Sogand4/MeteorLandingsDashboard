@@ -24,7 +24,7 @@ const Task2 = {
 
     Task2.populationDensityScatterPlot = new PopulationDensityScatterPlot(
       {
-        parentElement: "#population-density-scatter",
+        parentElement: '#population-density-scatter',
         containerWidth: plotSize.width,
         containerHeight: plotSize.height,
       },

@@ -24,7 +24,7 @@ const Task1 = {
 
     Task1.massByClassBoxPlot = new MassByClassBoxPlot(
       {
-        parentElement: "#mass-by-class-boxplot",
+        parentElement: '#mass-by-class-boxplot',
         containerWidth: plotSize.width,
         containerHeight: plotSize.height,
       },

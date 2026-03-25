@@ -16,16 +16,14 @@ class TopMeteoriteDistributionBarChart {
   }
 
   initVis() {
-    let vis = this;
+    const vis = this;
 
-    vis.width =
-      vis.config.containerWidth -
-      vis.config.margin.left -
-      vis.config.margin.right;
-    vis.height =
-      vis.config.containerHeight -
-      vis.config.margin.top -
-      vis.config.margin.bottom;
+    vis.width = vis.config.containerWidth
+      - vis.config.margin.left
+      - vis.config.margin.right;
+    vis.height = vis.config.containerHeight
+      - vis.config.margin.top
+      - vis.config.margin.bottom;
 
     vis.xScale = d3.scaleBand().range([0, vis.width]).padding(0.15);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]).domain([0, 1]);
@@ -33,49 +31,49 @@ class TopMeteoriteDistributionBarChart {
     vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format(".0%")).ticks(5);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('.0%')).ticks(5);
 
     vis.svg = d3
       .select(vis.config.parentElement)
-      .append("svg")
-      .attr("width", vis.config.containerWidth)
-      .attr("height", vis.config.containerHeight)
-      .attr("id", "top-meteorite-distribution-bar-chart-svg");
+      .append('svg')
+      .attr('width', vis.config.containerWidth)
+      .attr('height', vis.config.containerHeight)
+      .attr('id', 'top-meteorite-distribution-bar-chart-svg');
 
     vis.svg
-      .append("text")
-      .attr("class", "chart-title")
-      .attr("x", vis.config.containerWidth / 2)
-      .attr("y", 18)
-      .attr("text-anchor", "middle")
-      .style("font-size", "12px")
-      .style("font-weight", "600")
-      .text("Top Meteorite Recclass Distribution by Century");
+      .append('text')
+      .attr('class', 'chart-title')
+      .attr('x', vis.config.containerWidth / 2)
+      .attr('y', 18)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '12px')
+      .style('font-weight', '600')
+      .text('Top Meteorite Recclass Distribution by Century');
 
     vis.chartArea = vis.svg
-      .append("g")
+      .append('g')
       .attr(
-        "transform",
+        'transform',
         `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
 
     vis.xAxisGroup = vis.chartArea
-      .append("g")
-      .attr("class", "x-axis")
-      .attr("transform", `translate(0, ${vis.height})`);
+      .append('g')
+      .attr('class', 'x-axis')
+      .attr('transform', `translate(0, ${vis.height})`);
 
-    vis.yAxisGroup = vis.chartArea.append("g").attr("class", "y-axis");
+    vis.yAxisGroup = vis.chartArea.append('g').attr('class', 'y-axis');
 
     vis.legendGroup = vis.svg
-      .append("g")
-      .attr("class", "legend")
-      .attr("transform", `translate(${vis.config.containerWidth / 4}, 38)`);
+      .append('g')
+      .attr('class', 'legend')
+      .attr('transform', `translate(${vis.config.containerWidth / 4}, 38)`);
 
     vis.updateVis();
   }
 
   updateVis() {
-    let vis = this;
+    const vis = this;
 
     const recclassCounts = d3.rollups(
       vis.data,
@@ -88,13 +86,13 @@ class TopMeteoriteDistributionBarChart {
       .slice(0, 3)
       .map((d) => d[0]);
 
-    vis.stackKeys = [...vis.topRecclasses, "Other"];
+    vis.stackKeys = [...vis.topRecclasses, 'Other'];
 
     const processedData = vis.data.map((d) => {
       const yearBucket = Math.floor(d.year / 100) * 100;
       const recclassGroup = vis.topRecclasses.includes(d.recclass)
         ? d.recclass
-        : "Other";
+        : 'Other';
 
       return {
         yearBucket,
@@ -143,55 +141,55 @@ class TopMeteoriteDistributionBarChart {
   }
 
   renderVis() {
-    let vis = this;
+    const vis = this;
 
     const layer = vis.chartArea
-      .selectAll(".stack-layer")
+      .selectAll('.stack-layer')
       .data(vis.series, (d) => d.key)
-      .join("g")
-      .attr("class", "stack-layer")
-      .attr("fill", (d) => vis.colorScale(d.key));
+      .join('g')
+      .attr('class', 'stack-layer')
+      .attr('fill', (d) => vis.colorScale(d.key));
 
     layer
-      .selectAll("rect")
+      .selectAll('rect')
       .data((d) => d)
-      .join("rect")
-      .attr("x", (d) => vis.xScale(d.data.year))
-      .attr("y", (d) => vis.yScale(d[1]))
-      .attr("width", vis.xScale.bandwidth())
-      .attr("height", (d) => vis.yScale(d[0]) - vis.yScale(d[1]));
+      .join('rect')
+      .attr('x', (d) => vis.xScale(d.data.year))
+      .attr('y', (d) => vis.yScale(d[1]))
+      .attr('width', vis.xScale.bandwidth())
+      .attr('height', (d) => vis.yScale(d[0]) - vis.yScale(d[1]));
 
     const legendItems = vis.legendGroup
-      .selectAll(".legend-item")
+      .selectAll('.legend-item')
       .data(vis.stackKeys, (d) => d)
-      .join("g")
-      .attr("class", "legend-item")
-      .attr("transform", (d, i) => `translate(${i * 55}, 0)`);
+      .join('g')
+      .attr('class', 'legend-item')
+      .attr('transform', (d, i) => `translate(${i * 55}, 0)`);
 
     legendItems
-      .selectAll("rect")
+      .selectAll('rect')
       .data((d) => [d])
-      .join("rect")
-      .attr("width", 10)
-      .attr("height", 10)
-      .attr("y", -10)
-      .attr("fill", (d) => vis.colorScale(d));
+      .join('rect')
+      .attr('width', 10)
+      .attr('height', 10)
+      .attr('y', -10)
+      .attr('fill', (d) => vis.colorScale(d));
 
     legendItems
-      .selectAll("text")
+      .selectAll('text')
       .data((d) => [d])
-      .join("text")
-      .attr("x", 14)
-      .attr("y", -1)
-      .style("font-size", "10px")
+      .join('text')
+      .attr('x', 14)
+      .attr('y', -1)
+      .style('font-size', '10px')
       .text((d) => d);
 
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);
 
     vis.xAxisGroup
-      .selectAll("text")
-      .attr("transform", "rotate(-45)")
-      .style("text-anchor", "end");
+      .selectAll('text')
+      .attr('transform', 'rotate(-45)')
+      .style('text-anchor', 'end');
   }
 }

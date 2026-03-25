@@ -23,25 +23,23 @@ const Task4 = {
 
     const barSize = Task4.getContainerSize(barChartContainer);
 
-    Task4.totalMeteoriteDiscoveriesBarChart =
-      new TotalMeteoriteDiscoveriesBarChart(
-        {
-          parentElement: "#total-meteorite-discoveries-bar-chart",
-          containerWidth: barSize.width,
-          containerHeight: barSize.height,
-        },
-        data,
-      );
+    Task4.totalMeteoriteDiscoveriesBarChart = new TotalMeteoriteDiscoveriesBarChart(
+      {
+        parentElement: '#total-meteorite-discoveries-bar-chart',
+        containerWidth: barSize.width,
+        containerHeight: barSize.height,
+      },
+      data,
+    );
 
-    Task4.topMeteoriteDistributionBarChart =
-      new TopMeteoriteDistributionBarChart(
-        {
-          parentElement: "#top-meteorite-distribution-bar-chart",
-          containerWidth: barSize.width,
-          containerHeight: barSize.height,
-        },
-        data,
-      );
+    Task4.topMeteoriteDistributionBarChart = new TopMeteoriteDistributionBarChart(
+      {
+        parentElement: '#top-meteorite-distribution-bar-chart',
+        containerWidth: barSize.width,
+        containerHeight: barSize.height,
+      },
+      data,
+    );
 
     return Task4;
   },
