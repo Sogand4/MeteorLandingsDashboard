@@ -30,7 +30,7 @@ export default class TopMeteoriteDistributionBarChart {
 
     vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
-    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`);
     vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('.0%')).ticks(5);
 
     vis.svg = d3
@@ -89,7 +89,7 @@ export default class TopMeteoriteDistributionBarChart {
     vis.stackKeys = [...vis.topRecclasses, 'Other'];
 
     const processedData = vis.data.map((d) => {
-      const yearBucket = Math.floor(d.year / 100) * 100;
+      const yearBucket = Math.floor(d.year / 10) * 10;
       const recclassGroup = vis.topRecclasses.includes(d.recclass)
         ? d.recclass
         : 'Other';

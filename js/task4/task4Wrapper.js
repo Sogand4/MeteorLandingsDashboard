@@ -4,6 +4,7 @@
  */
 import TopMeteoriteDistributionBarChart from './topMeteoriteDistributionBarChart.js';
 import TotalMeteoriteDiscoveriesBarChart from './totalMeteoriteDiscoveriesBarChart.js';
+import FilterOutlierYears from '../utils/yearFilter.js';
 
 const Task4 = {
   totalMeteoriteDiscoveriesBarChart: null,
@@ -23,6 +24,7 @@ const Task4 = {
 
   init(config) {
     const { barChartContainer, data } = config;
+    const filteredData = FilterOutlierYears(data);
 
     const barSize = Task4.getContainerSize(barChartContainer);
 
@@ -32,7 +34,7 @@ const Task4 = {
         containerWidth: barSize.width,
         containerHeight: barSize.height,
       },
-      data,
+      filteredData,
     );
 
     Task4.topMeteoriteDistributionBarChart = new TopMeteoriteDistributionBarChart(
@@ -41,7 +43,7 @@ const Task4 = {
         containerWidth: barSize.width,
         containerHeight: barSize.height,
       },
-      data,
+      filteredData,
     );
 
     return Task4;

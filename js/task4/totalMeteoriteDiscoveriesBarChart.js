@@ -28,7 +28,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
     vis.xScale = d3.scaleBand().range([0, vis.width]).padding(0.15);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
-    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`);
     vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('d')).ticks(5);
 
     vis.svg = d3
@@ -72,7 +72,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .rollups(
         vis.data,
         (group) => group.length,
-        (d) => Math.floor(d.year / 100) * 100,
+        (d) => Math.floor(d.year / 10) * 10,
       )
       .map((d) => ({
         year: d[0],
