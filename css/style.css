@@ -287,3 +287,17 @@ body {
   font-size: 11px;
   fill: #666;
 }
+
+/* Vis 4 */
+
+.stack-layer rect {
+  transition: opacity 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+}
+
+.stack-layer rect.is-dimmed {
+  opacity: 0.25;
+}
+
+.stack-layer rect.is-highlighted {
+  opacity: 1;
+}

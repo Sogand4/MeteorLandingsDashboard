@@ -6,6 +6,8 @@ import TopMeteoriteDistributionBarChart from './topMeteoriteDistributionBarChart
 import TotalMeteoriteDiscoveriesBarChart from './totalMeteoriteDiscoveriesBarChart.js';
 import FilterOutlierYears from '../utils/yearFilter.js';
 
+const dispatcher = d3.dispatch('hoverTotalMeteoriteBucket');
+
 const Task4 = {
   totalMeteoriteDiscoveriesBarChart: null,
   topMeteoriteDistributionBarChart: null,
@@ -35,6 +37,7 @@ const Task4 = {
         containerHeight: barSize.height,
       },
       filteredData,
+      dispatcher,
     );
 
     Task4.topMeteoriteDistributionBarChart = new TopMeteoriteDistributionBarChart(
@@ -44,6 +47,7 @@ const Task4 = {
         containerHeight: barSize.height,
       },
       filteredData,
+      dispatcher,
     );
 
     return Task4;

@@ -1,5 +1,5 @@
 export default class TotalMeteoriteDiscoveriesBarChart {
-  constructor(_config, data) {
+  constructor(_config, data, dispatcher) {
     this.config = {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 240,
@@ -12,6 +12,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       },
     };
     this.data = data;
+    this.dispatcher = dispatcher;
     this.initVis();
   }
 
@@ -46,7 +47,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .attr('text-anchor', 'middle')
       .style('font-size', '12px')
       .style('font-weight', '600')
-      .text('Total Meteorite Discoveries Per Century');
+      .text('Total Meteorite Discoveries Per Decade');
 
     vis.chartArea = vis.svg
       .append('g')
@@ -98,7 +99,13 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .attr('x', (d) => vis.xScale(d.year))
       .attr('y', (d) => vis.yScale(d.count))
       .attr('width', vis.xScale.bandwidth())
-      .attr('height', (d) => vis.height - vis.yScale(d.count));
+      .attr('height', (d) => vis.height - vis.yScale(d.count))
+      .on('mouseover', (event, d) => {
+        vis.dispatcher.call('hoverTotalMeteoriteBucket', event, d.year);
+      })
+      .on('mouseout', (event) => {
+        vis.dispatcher.call('hoverTotalMeteoriteBucket', event, null);
+      });
 
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);

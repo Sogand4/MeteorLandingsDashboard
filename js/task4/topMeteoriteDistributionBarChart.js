@@ -1,5 +1,5 @@
 export default class TopMeteoriteDistributionBarChart {
-  constructor(_config, data) {
+  constructor(_config, data, dispatcher) {
     this.config = {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 240,
@@ -12,6 +12,7 @@ export default class TopMeteoriteDistributionBarChart {
       },
     };
     this.data = data;
+    this.dispatcher = dispatcher;
     this.initVis();
   }
 
@@ -48,7 +49,7 @@ export default class TopMeteoriteDistributionBarChart {
       .attr('text-anchor', 'middle')
       .style('font-size', '12px')
       .style('font-weight', '600')
-      .text('Top Meteorite Recclass Distribution by Century');
+      .text('Top Meteorite Recclass Distribution by Decade');
 
     vis.chartArea = vis.svg
       .append('g')
@@ -150,7 +151,7 @@ export default class TopMeteoriteDistributionBarChart {
       .attr('class', 'stack-layer')
       .attr('fill', (d) => vis.colorScale(d.key));
 
-    layer
+    const bars = layer
       .selectAll('rect')
       .data((d) => d)
       .join('rect')
@@ -158,6 +159,18 @@ export default class TopMeteoriteDistributionBarChart {
       .attr('y', (d) => vis.yScale(d[1]))
       .attr('width', vis.xScale.bandwidth())
       .attr('height', (d) => vis.yScale(d[0]) - vis.yScale(d[1]));
+
+    vis.dispatcher.on('hoverTotalMeteoriteBucket', (bucket) => {
+      if (bucket == null) {
+        bars
+          .classed('is-highlighted', false)
+          .classed('is-dimmed', false);
+      } else {
+        bars
+          .classed('is-highlighted', (d) => d.data.year === bucket)
+          .classed('is-dimmed', (d) => d.data.year !== bucket);
+      }
+    });
 
     const legendItems = vis.legendGroup
       .selectAll('.legend-item')
