@@ -1,4 +1,4 @@
-class MassByClassBoxPlot {
+export default class MassByClassBoxPlot {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
@@ -12,64 +12,62 @@ class MassByClassBoxPlot {
       },
     };
     this.data = data;
-    this.selectedClass1 = "H5";
-    this.selectedClass2 = "H6";
+    this.selectedClass1 = 'H5';
+    this.selectedClass2 = 'H6';
     this.initVis();
   }
 
   initVis() {
-    let vis = this;
+    const vis = this;
 
-    vis.width =
-      vis.config.containerWidth -
-      vis.config.margin.left -
-      vis.config.margin.right;
-    vis.height =
-      vis.config.containerHeight -
-      vis.config.margin.top -
-      vis.config.margin.bottom;
+    vis.width = vis.config.containerWidth
+      - vis.config.margin.left
+      - vis.config.margin.right;
+    vis.height = vis.config.containerHeight
+      - vis.config.margin.top
+      - vis.config.margin.bottom;
 
     vis.container = d3.select(vis.config.parentElement);
 
     vis.title = vis.container
-      .append("div")
-      .attr("class", "chart-title")
-      .style("text-align", "center")
-      .style("font-size", "12px")
-      .style("font-weight", "600")
-      .style("margin-bottom", "8px")
-      .text("Mass Distribution for Two Meteorite Classes");
+      .append('div')
+      .attr('class', 'chart-title')
+      .style('text-align', 'center')
+      .style('font-size', '12px')
+      .style('font-weight', '600')
+      .style('margin-bottom', '8px')
+      .text('Mass Distribution for Two Meteorite Classes');
 
     const classes = Array.from(new Set(vis.data.map((d) => d.recclass))).sort();
 
     vis.controls = vis.container
-      .append("div")
-      .attr("class", "chart-controls")
-      .style("display", "flex")
-      .style("justify-content", "center")
-      .style("gap", "8px")
-      .style("margin-bottom", "8px");
+      .append('div')
+      .attr('class', 'chart-controls')
+      .style('display', 'flex')
+      .style('justify-content', 'center')
+      .style('gap', '8px')
+      .style('margin-bottom', '8px');
 
-    vis.dropdown1 = vis.controls.append("select").attr("id", "class-select-1");
+    vis.dropdown1 = vis.controls.append('select').attr('id', 'class-select-1');
 
-    vis.dropdown2 = vis.controls.append("select").attr("id", "class-select-2");
+    vis.dropdown2 = vis.controls.append('select').attr('id', 'class-select-2');
 
     vis.dropdown1
-      .selectAll("option")
+      .selectAll('option')
       .data(classes)
-      .join("option")
-      .attr("value", (d) => d)
+      .join('option')
+      .attr('value', (d) => d)
       .text((d) => d);
 
     vis.dropdown2
-      .selectAll("option")
+      .selectAll('option')
       .data(classes)
-      .join("option")
-      .attr("value", (d) => d)
+      .join('option')
+      .attr('value', (d) => d)
       .text((d) => d);
 
-    vis.dropdown1.property("value", vis.selectedClass1);
-    vis.dropdown2.property("value", vis.selectedClass2);
+    vis.dropdown1.property('value', vis.selectedClass1);
+    vis.dropdown2.property('value', vis.selectedClass2);
 
     vis.yScale = d3.scaleLog().range([vis.height, 0]);
     vis.xScale = d3
@@ -82,36 +80,36 @@ class MassByClassBoxPlot {
     vis.yAxis = d3
       .axisLeft(vis.yScale)
       .tickValues(d3.range(-2, 8).map((d) => 10 ** d))
-      .tickFormat(d3.format(".2f"));
+      .tickFormat(d3.format('.2f'));
 
     vis.svg = vis.container
-      .append("svg")
-      .attr("width", vis.config.containerWidth)
-      .attr("height", vis.config.containerHeight)
-      .attr("id", "mass-by-class-boxplot-svg");
+      .append('svg')
+      .attr('width', vis.config.containerWidth)
+      .attr('height', vis.config.containerHeight)
+      .attr('id', 'mass-by-class-boxplot-svg');
 
     vis.chartArea = vis.svg
-      .append("g")
+      .append('g')
       .attr(
-        "transform",
+        'transform',
         `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
 
     vis.xAxisGroup = vis.chartArea
-      .append("g")
-      .attr("class", "x-axis")
-      .attr("transform", `translate(0, ${vis.height})`);
+      .append('g')
+      .attr('class', 'x-axis')
+      .attr('transform', `translate(0, ${vis.height})`);
 
-    vis.yAxisGroup = vis.chartArea.append("g").attr("class", "y-axis");
+    vis.yAxisGroup = vis.chartArea.append('g').attr('class', 'y-axis');
 
     vis.updateVis();
   }
 
   updateVis() {
-    let vis = this;
+    const vis = this;
 
-    vis.selectedClass1 = vis.dropdown1.property("value");
-    vis.selectedClass2 = vis.dropdown2.property("value");
+    vis.selectedClass1 = vis.dropdown1.property('value');
+    vis.selectedClass2 = vis.dropdown2.property('value');
 
     vis.selectedClasses = [vis.selectedClass1, vis.selectedClass2];
 
@@ -164,105 +162,104 @@ class MassByClassBoxPlot {
   }
 
   renderVis() {
-    let vis = this;
+    const vis = this;
 
     const boxWidth = Math.min(40, vis.xScale.bandwidth() * 0.6);
-    const colors = ["#4e79a7", "#f28e2b"];
+    const colors = ['#4e79a7', '#f28e2b'];
 
     vis.boxGroups = vis.chartArea
-      .selectAll(".box-group")
+      .selectAll('.box-group')
       .data(vis.boxData, (d) => d.recclass)
-      .join("g")
-      .attr("class", "box-group")
+      .join('g')
+      .attr('class', 'box-group')
       .attr(
-        "transform",
-        (d) =>
-          `translate(${vis.xScale(d.recclass) + vis.xScale.bandwidth() / 2},0)`,
+        'transform',
+        (d) => `translate(${vis.xScale(d.recclass) + vis.xScale.bandwidth() / 2},0)`,
       );
 
     vis.boxGroups
-      .selectAll(".whisker-line")
+      .selectAll('.whisker-line')
       .data((d) => [d])
-      .join("line")
-      .attr("class", "whisker-line")
-      .attr("x1", 0)
-      .attr("x2", 0)
-      .attr("y1", (d) => vis.yScale(d.min))
-      .attr("y2", (d) => vis.yScale(d.max))
-      .attr("stroke", "#444");
+      .join('line')
+      .attr('class', 'whisker-line')
+      .attr('x1', 0)
+      .attr('x2', 0)
+      .attr('y1', (d) => vis.yScale(d.min))
+      .attr('y2', (d) => vis.yScale(d.max))
+      .attr('stroke', '#444');
 
     vis.boxGroups
-      .selectAll(".whisker-top")
+      .selectAll('.whisker-top')
       .data((d) => [d])
-      .join("line")
-      .attr("class", "whisker-top")
-      .attr("x1", -boxWidth / 3)
-      .attr("x2", boxWidth / 3)
-      .attr("y1", (d) => vis.yScale(d.max))
-      .attr("y2", (d) => vis.yScale(d.max))
-      .attr("stroke", "#444");
+      .join('line')
+      .attr('class', 'whisker-top')
+      .attr('x1', -boxWidth / 3)
+      .attr('x2', boxWidth / 3)
+      .attr('y1', (d) => vis.yScale(d.max))
+      .attr('y2', (d) => vis.yScale(d.max))
+      .attr('stroke', '#444');
 
     vis.boxGroups
-      .selectAll(".whisker-bottom")
+      .selectAll('.whisker-bottom')
       .data((d) => [d])
-      .join("line")
-      .attr("class", "whisker-bottom")
-      .attr("x1", -boxWidth / 3)
-      .attr("x2", boxWidth / 3)
-      .attr("y1", (d) => vis.yScale(d.min))
-      .attr("y2", (d) => vis.yScale(d.min))
-      .attr("stroke", "#444");
+      .join('line')
+      .attr('class', 'whisker-bottom')
+      .attr('x1', -boxWidth / 3)
+      .attr('x2', boxWidth / 3)
+      .attr('y1', (d) => vis.yScale(d.min))
+      .attr('y2', (d) => vis.yScale(d.min))
+      .attr('stroke', '#444');
 
     vis.boxGroups
-      .selectAll(".box")
+      .selectAll('.box')
       .data((d) => [d])
-      .join("rect")
-      .attr("class", "box")
-      .attr("x", -boxWidth / 2)
-      .attr("width", boxWidth)
-      .attr("y", (d) => vis.yScale(d.q3))
-      .attr("height", (d) => vis.yScale(d.q1) - vis.yScale(d.q3))
-      .attr("fill", (d) => colors[vis.selectedClasses.indexOf(d.recclass)])
-      .attr("fill-opacity", 0.45)
-      .attr("stroke", "#444");
+      .join('rect')
+      .attr('class', 'box')
+      .attr('x', -boxWidth / 2)
+      .attr('width', boxWidth)
+      .attr('y', (d) => vis.yScale(d.q3))
+      .attr('height', (d) => vis.yScale(d.q1) - vis.yScale(d.q3))
+      .attr('fill', (d) => colors[vis.selectedClasses.indexOf(d.recclass)])
+      .attr('fill-opacity', 0.45)
+      .attr('stroke', '#444');
 
     vis.boxGroups
-      .selectAll(".median-line")
+      .selectAll('.median-line')
       .data((d) => [d])
-      .join("line")
-      .attr("class", "median-line")
-      .attr("x1", -boxWidth / 2)
-      .attr("x2", boxWidth / 2)
-      .attr("y1", (d) => vis.yScale(d.median))
-      .attr("y2", (d) => vis.yScale(d.median))
-      .attr("stroke", "#111")
-      .attr("stroke-width", 1.5);
+      .join('line')
+      .attr('class', 'median-line')
+      .attr('x1', -boxWidth / 2)
+      .attr('x2', boxWidth / 2)
+      .attr('y1', (d) => vis.yScale(d.median))
+      .attr('y2', (d) => vis.yScale(d.median))
+      .attr('stroke', '#111')
+      .attr('stroke-width', 1.5);
 
     vis.boxGroups
-      .selectAll(".outlier")
+      .selectAll('.outlier')
       .data((d) => d.outliers.map((value) => ({ recclass: d.recclass, value })))
-      .join("circle")
-      .attr("class", "outlier")
-      .attr("cx", 0)
-      .attr("cy", (d) => vis.yScale(d.value))
-      .attr("r", 2.5)
-      .attr("fill", (d) => colors[vis.selectedClasses.indexOf(d.recclass)])
-      .attr("fill-opacity", 0.7);
+      .join('circle')
+      .attr('class', 'outlier')
+      .attr('cx', 0)
+      .attr('cy', (d) => vis.yScale(d.value))
+      .attr('r', 2.5)
+      .attr('fill', (d) => colors[vis.selectedClasses.indexOf(d.recclass)])
+      .attr('fill-opacity', 0.7);
 
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);
 
     vis.yAxisGroup
-      .selectAll(".axis-label")
+      .selectAll('.axis-label')
       .data([null])
-      .join("text")
-      .attr("class", "axis-label")
-      .attr("x", -vis.height / 2)
-      .attr("y", -42)
-      .attr("transform", "rotate(-90)")
-      .attr("fill", "black")
-      .attr("text-anchor", "middle")
-      .style("font-size", "10px")
-      .text("Mass (log scale)");
+      .join('text')
+      .attr('class', 'axis-label')
+      .attr('x', -vis.height / 2)
+      .attr('y', -42)
+      .attr('transform', 'rotate(-90)')
+      .attr('fill', 'black')
+      .attr('text-anchor', 'middle')
+      .style('font-size', '10px')
+      .text('Mass (log scale)');
   }
 }

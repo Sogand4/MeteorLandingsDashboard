@@ -7,13 +7,17 @@
  * - Bivariate Hexbin Map (Bostock): https://gist.github.com/mbostock/4330486
  * - D3 Hexbin Map: https://observablehq.com/@d3/hexbin-map
  */
-class Task3Map {
+import mapUtils from '../utils/mapUtils.js';
+
+export default class Task3Map {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 600,
       containerHeight: _config.containerHeight || 400,
-      margin: { top: 10, right: 10, bottom: 10, left: 10 },
+      margin: {
+        top: 10, right: 10, bottom: 10, left: 10,
+      },
       hexRadius: _config.hexRadius || 3,
     };
     this.data = data;
@@ -23,45 +27,43 @@ class Task3Map {
 
   initVis() {
     const vis = this;
-    vis.width =
-      vis.config.containerWidth -
-      vis.config.margin.left -
-      vis.config.margin.right;
-    vis.height =
-      vis.config.containerHeight -
-      vis.config.margin.top -
-      vis.config.margin.bottom;
+    vis.width = vis.config.containerWidth
+      - vis.config.margin.left
+      - vis.config.margin.right;
+    vis.height = vis.config.containerHeight
+      - vis.config.margin.top
+      - vis.config.margin.bottom;
 
     vis.svgRoot = d3
       .select(vis.config.parentElement)
-      .append("svg")
-      .attr("width", vis.config.containerWidth)
-      .attr("height", vis.config.containerHeight);
+      .append('svg')
+      .attr('width', vis.config.containerWidth)
+      .attr('height', vis.config.containerHeight);
 
     vis.svg = vis.svgRoot
-      .append("g")
+      .append('g')
       .attr(
-        "transform",
-        `translate(${vis.config.margin.left},${vis.config.margin.top})`
+        'transform',
+        `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
 
     vis.projection = d3
       .geoNaturalEarth1()
-      .fitSize([vis.width, vis.height], { type: "Sphere" });
+      .fitSize([vis.width, vis.height], { type: 'Sphere' });
     vis.path = d3.geoPath().projection(vis.projection);
 
     vis.tooltip = d3
-      .select("body")
-      .append("div")
-      .attr("class", "task3-map-tooltip")
-      .style("position", "absolute")
-      .style("visibility", "hidden")
-      .style("pointer-events", "none");
+      .select('body')
+      .append('div')
+      .attr('class', 'task3-map-tooltip')
+      .style('position', 'absolute')
+      .style('visibility', 'hidden')
+      .style('pointer-events', 'none');
   }
 
   async loadWorldMap() {
-  this.countries = await mapUtils.loadWorldMap();
-}
+    this.countries = await mapUtils.loadWorldMap();
+  }
 
   wrangleData() {
     const vis = this;
@@ -87,15 +89,15 @@ class Task3Map {
         const p = vis.projection([d.lon, d.lat]);
         return p
           ? {
-              x: p[0],
-              y: p[1],
-              name: d.name,
-              country: d.country,
-              recclass: d.recclass,
-              year: d.year,
-              mass: d.mass,
-              fall: d.fall,
-            }
+            x: p[0],
+            y: p[1],
+            name: d.name,
+            country: d.country,
+            recclass: d.recclass,
+            year: d.year,
+            mass: d.mass,
+            fall: d.fall,
+          }
           : null;
       })
       .filter(Boolean);
@@ -123,122 +125,118 @@ class Task3Map {
   renderVis() {
     const vis = this;
 
-    vis.svg.selectAll(".hexbin").remove();
-    vis.svg.selectAll(".country").remove();
-    vis.svg.selectAll(".graticule").remove();
-    vis.svg.selectAll(".legend").remove();
+    vis.svg.selectAll('.hexbin').remove();
+    vis.svg.selectAll('.country').remove();
+    vis.svg.selectAll('.graticule').remove();
+    vis.svg.selectAll('.legend').remove();
 
     if (vis.countries) {
       vis.svg
-        .append("g")
-        .attr("class", "country")
-        .selectAll("path")
+        .append('g')
+        .attr('class', 'country')
+        .selectAll('path')
         .data(vis.countries)
-        .join("path")
-        .attr("d", vis.path)
-        .attr("fill", "#f0f0f0")
-        .attr("stroke", "#ccc")
-        .attr("stroke-width", 0.5);
+        .join('path')
+        .attr('d', vis.path)
+        .attr('fill', '#f0f0f0')
+        .attr('stroke', '#ccc')
+        .attr('stroke-width', 0.5);
     } else {
       const graticule = d3.geoGraticule10();
       vis.svg
-        .append("path")
-        .attr("class", "graticule")
-        .attr("d", vis.path(graticule()))
-        .attr("fill", "none")
-        .attr("stroke", "#ddd");
+        .append('path')
+        .attr('class', 'graticule')
+        .attr('d', vis.path(graticule()))
+        .attr('fill', 'none')
+        .attr('stroke', '#ddd');
     }
 
     const hexPaths = vis.svg
-      .append("g")
-      .attr("class", "hexbin")
-      .selectAll("path")
+      .append('g')
+      .attr('class', 'hexbin')
+      .selectAll('path')
       .data(vis.bins)
-      .join("path")
-      .attr("d", vis.hexbin.hexagon())
-      .attr("transform", (d) => `translate(${d.x},${d.y})`)
-      .attr("fill", (d) => vis.colorScale(d.length))
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 0.5)
-      .attr("opacity", 0.85);
+      .join('path')
+      .attr('d', vis.hexbin.hexagon())
+      .attr('transform', (d) => `translate(${d.x},${d.y})`)
+      .attr('fill', (d) => vis.colorScale(d.length))
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 0.5)
+      .attr('opacity', 0.85);
 
     hexPaths
-      .on("mouseover", function (event, d) {
+      .on('mouseover', (event, d) => {
         const countryCounts = d3.rollup(
           d,
           (v) => v.length,
-          (p) => p.country || "Unknown"
+          (p) => p.country || 'Unknown',
         );
         const topCountries = [...countryCounts.entries()]
           .sort((a, b) => b[1] - a[1])
           .slice(0, 4)
           .map(([c, n]) => `${c}: ${n}`)
-          .join(", ");
+          .join(', ');
 
         const classCounts = d3.rollup(
           d,
           (v) => v.length,
-          (p) => p.recclass || "Unknown"
+          (p) => p.recclass || 'Unknown',
         );
         const topClasses = [...classCounts.entries()]
           .sort((a, b) => b[1] - a[1])
           .slice(0, 3)
           .map(([c, n]) => `${c}: ${n}`)
-          .join(", ");
+          .join(', ');
 
-        const years = d.map((p) => p.year).filter((y) => y != null && !isNaN(y));
-        const yearRange =
-          years.length > 0
-            ? `${Math.min(...years)} – ${Math.max(...years)}`
-            : "N/A";
+        const years = d.map((p) => p.year).filter((y) => y != null && !Number.isNaN(y));
+        const yearRange = years.length > 0
+          ? `${Math.min(...years)} – ${Math.max(...years)}`
+          : 'N/A';
 
         const masses = d.map((p) => p.mass).filter((m) => m != null && m > 0);
-        const massRange =
-          masses.length > 0
-            ? `${d3.format(".2s")(Math.min(...masses))} – ${d3.format(".2s")(Math.max(...masses))} g`
-            : "N/A";
+        const massRange = masses.length > 0
+          ? `${d3.format('.2s')(Math.min(...masses))} – ${d3.format('.2s')(Math.max(...masses))} g`
+          : 'N/A';
 
-        const fallCount = d.filter((p) => p.fall === "Fell").length;
-        const foundCount = d.filter((p) => p.fall === "Found").length;
-        const fallInfo =
-          fallCount > 0 || foundCount > 0
-            ? `Fell: ${fallCount} · Found: ${foundCount}`
-            : "";
+        const fallCount = d.filter((p) => p.fall === 'Fell').length;
+        const foundCount = d.filter((p) => p.fall === 'Found').length;
+        const fallInfo = fallCount > 0 || foundCount > 0
+          ? `Fell: ${fallCount} · Found: ${foundCount}`
+          : '';
 
         const cleanNames = [
           ...new Set(
-            d.map((p) => mapUtils.cleanMeteoriteName(p.name)).filter(Boolean)
+            d.map((p) => mapUtils.cleanMeteoriteName(p.name)).filter(Boolean),
           ),
         ];
         const maxNames = 8;
         const namesToShow = cleanNames.slice(0, maxNames);
-        const namesHtml =
-          namesToShow.length > 0
-            ? `Examples: ${namesToShow.join(", ")}` +
-              (cleanNames.length > maxNames
-                ? ` (+${cleanNames.length - maxNames} more)`
-                : "")
-            : "";
+        const namesHtml = namesToShow.length > 0
+          ? `Examples: ${namesToShow.join(', ')}${
+            cleanNames.length > maxNames
+              ? ` (+${cleanNames.length - maxNames} more)`
+              : ''}`
+          : '';
 
         vis.tooltip
-          .style("visibility", "visible")
+          .style('visibility', 'visible')
           .html(
-            `<strong>${d.length} meteorite(s) in this region</strong><br/>` +
-              (namesHtml ? `${namesHtml}<br/>` : "") +
-              (topCountries ? `Countries: ${topCountries}<br/>` : "") +
-              (topClasses ? `Classes: ${topClasses}<br/>` : "") +
-              `Year range: ${yearRange}<br/>` +
-              `Mass range: ${massRange}` +
-              (fallInfo ? `<br/>${fallInfo}` : "")
+            `<strong>${d.length} meteorite(s) in this region</strong><br/>${
+              namesHtml ? `${namesHtml}<br/>` : ''
+            }${topCountries ? `Countries: ${topCountries}<br/>` : ''
+            }${topClasses ? `Classes: ${topClasses}<br/>` : ''
+            }Year range: ${yearRange}<br/>`
+              + `Mass range: ${massRange}${
+                fallInfo ? `<br/>${fallInfo}` : ''}`,
           );
       })
-      .on("mousemove", function (event) {
+      .on('mousemove', (event) => {
         vis.tooltip
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY + 10 + "px");
+          .style('left', `${event.pageX + 10}px`)
+          .style('top', `${event.pageY + 10}px`);
       })
-      .on("mouseout", function () {
-        vis.tooltip.style("visibility", "hidden");
+      .on('mouseout', () => {
+        vis.tooltip.style('visibility', 'hidden');
       });
 
     vis.renderLegend();
@@ -260,32 +258,32 @@ class Task3Map {
     const barHeight = 18;
     const labelOffset = 28;
 
-    const fmt = (n) => (Number.isFinite(n) ? d3.format(",")(Math.round(n)) : "0");
+    const fmt = (n) => (Number.isFinite(n) ? d3.format(',')(Math.round(n)) : '0');
 
     const legendHeight = 25 + (steps + 1) * barHeight;
     const legend = vis.svg
-      .append("g")
-      .attr("class", "legend")
+      .append('g')
+      .attr('class', 'legend')
       .attr(
-        "transform",
-        `translate(15, ${vis.height - legendHeight - 10})`
+        'transform',
+        `translate(15, ${vis.height - legendHeight - 10})`,
       );
 
     legend
-      .append("text")
-      .attr("x", 0)
-      .attr("y", -5)
-      .attr("font-size", 11)
-      .attr("font-weight", "bold")
-      .text("Meteorite density");
+      .append('text')
+      .attr('x', 0)
+      .attr('y', -5)
+      .attr('font-size', 11)
+      .attr('font-weight', 'bold')
+      .text('Meteorite density');
 
     legend
-      .append("text")
-      .attr("x", 0)
-      .attr("y", 8)
-      .attr("font-size", 9)
-      .attr("fill", "#666")
-      .text("(count per hexbin)");
+      .append('text')
+      .attr('x', 0)
+      .attr('y', 8)
+      .attr('font-size', 9)
+      .attr('fill', '#666')
+      .text('(count per hexbin)');
 
     for (let i = 0; i <= steps; i++) {
       const v = steps > 0
@@ -301,20 +299,20 @@ class Task3Map {
       const y = 18 + i * barHeight;
 
       legend
-        .append("rect")
-        .attr("x", 0)
-        .attr("y", y)
-        .attr("width", barWidth)
-        .attr("height", barHeight - 2)
-        .attr("fill", vis.colorScale(v));
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', y)
+        .attr('width', barWidth)
+        .attr('height', barHeight - 2)
+        .attr('fill', vis.colorScale(v));
 
       legend
-        .append("text")
-        .attr("x", labelOffset)
-        .attr("y", y + (barHeight - 2) / 2 + 4)
-        .attr("font-size", 10)
-        .attr("fill", "#333")
-        .attr("dominant-baseline", "middle")
+        .append('text')
+        .attr('x', labelOffset)
+        .attr('y', y + (barHeight - 2) / 2 + 4)
+        .attr('font-size', 10)
+        .attr('fill', '#333')
+        .attr('dominant-baseline', 'middle')
         .text(label);
     }
   }
@@ -324,10 +322,11 @@ class Task3Map {
   }
 
   show() {
-    if (this.svgRoot) this.svgRoot.style("display", null);
+    if (this.svgRoot) this.svgRoot.style('display', null);
   }
+
   hide() {
-    if (this.svgRoot) this.svgRoot.style("display", "none");
+    if (this.svgRoot) this.svgRoot.style('display', 'none');
   }
 
   update(data) {

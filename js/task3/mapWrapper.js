@@ -6,11 +6,15 @@
  * References:
  * - UBC InfoVis 447 Tutorial 5 (Multiple views and advanced interactivity)
  */
+import Task3CountryLandingsBarChart from './countryLandingsBarChart.js';
+import Task3Map from './task3Map.js';
+import MassDistributionMap from '../task5/massDistribution.js';
+
 const MapWrapper = {
   densityMap: null,
   pointsMap: null,
   barChart: null,
-  currentMode: "density", // "density" | "points"
+  currentMode: 'density', // "density" | "points"
 
   getContainerSize(selector) {
     const el = document.querySelector(selector);
@@ -25,7 +29,7 @@ const MapWrapper = {
    */
   setMode(mode) {
     MapWrapper.currentMode = mode;
-    if (mode === "density") {
+    if (mode === 'density') {
       MapWrapper.densityMap?.show();
       MapWrapper.pointsMap?.hide();
     } else {
@@ -35,7 +39,9 @@ const MapWrapper = {
   },
 
   init(config) {
-    const { mapContainer, barChartContainer, data, onCountrySelectExternal } = config;
+    const {
+      mapContainer, barChartContainer, data, onCountrySelectExternal,
+    } = config;
 
     const mapSize = MapWrapper.getContainerSize(mapContainer);
     const barSize = MapWrapper.getContainerSize(barChartContainer);
@@ -58,7 +64,7 @@ const MapWrapper = {
         containerHeight: barSize.height,
         onCountrySelect,
       },
-      data
+      data,
     );
     MapWrapper.barChart.initVis();
     MapWrapper.barChart.updateVis();
@@ -71,7 +77,7 @@ const MapWrapper = {
         containerHeight: mapSize.height,
         hexRadius: Math.max(1.5, mapSize.width / 240),
       },
-      data
+      data,
     );
 
     MapWrapper.pointsMap = new MassDistributionMap(
@@ -80,21 +86,21 @@ const MapWrapper = {
         containerWidth: mapSize.width,
         containerHeight: mapSize.height,
       },
-      data
+      data,
     );
 
     // Wire toggle radios
     document.querySelectorAll("input[name='map-mode']").forEach((radio) => {
-      radio.addEventListener("click", (e) => {
+      radio.addEventListener('click', (e) => {
         MapWrapper.setMode(e.target.value);
       });
     });
 
-    return MapWrapper.densityMap.render().then(() => {
-      return MapWrapper.pointsMap.render().then(() => {
-        MapWrapper.pointsMap.hide(); // density is default
-        return MapWrapper;
-      });
-    });
+    return MapWrapper.densityMap.render().then(() => MapWrapper.pointsMap.render().then(() => {
+      MapWrapper.pointsMap.hide(); // density is default
+      return MapWrapper;
+    }));
   },
 };
+
+export default MapWrapper;

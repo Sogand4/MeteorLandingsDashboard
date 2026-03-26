@@ -1,4 +1,4 @@
-class TotalMeteoriteDiscoveriesBarChart {
+export default class TotalMeteoriteDiscoveriesBarChart {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
@@ -16,59 +16,57 @@ class TotalMeteoriteDiscoveriesBarChart {
   }
 
   initVis() {
-    let vis = this;
+    const vis = this;
 
-    vis.width =
-      vis.config.containerWidth -
-      vis.config.margin.left -
-      vis.config.margin.right;
-    vis.height =
-      vis.config.containerHeight -
-      vis.config.margin.top -
-      vis.config.margin.bottom;
+    vis.width = vis.config.containerWidth
+      - vis.config.margin.left
+      - vis.config.margin.right;
+    vis.height = vis.config.containerHeight
+      - vis.config.margin.top
+      - vis.config.margin.bottom;
 
     vis.xScale = d3.scaleBand().range([0, vis.width]).padding(0.15);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 99}`);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format("d")).ticks(5);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('d')).ticks(5);
 
     vis.svg = d3
       .select(vis.config.parentElement)
-      .append("svg")
-      .attr("width", vis.config.containerWidth)
-      .attr("height", vis.config.containerHeight)
-      .attr("id", "total-meteorite-discoveries-bar-chart-svg");
+      .append('svg')
+      .attr('width', vis.config.containerWidth)
+      .attr('height', vis.config.containerHeight)
+      .attr('id', 'total-meteorite-discoveries-bar-chart-svg');
 
     vis.svg
-      .append("text")
-      .attr("class", "chart-title")
-      .attr("x", vis.config.containerWidth / 2)
-      .attr("y", 18)
-      .attr("text-anchor", "middle")
-      .style("font-size", "12px")
-      .style("font-weight", "600")
-      .text("Total Meteorite Discoveries Per Century");
+      .append('text')
+      .attr('class', 'chart-title')
+      .attr('x', vis.config.containerWidth / 2)
+      .attr('y', 18)
+      .attr('text-anchor', 'middle')
+      .style('font-size', '12px')
+      .style('font-weight', '600')
+      .text('Total Meteorite Discoveries Per Century');
 
     vis.chartArea = vis.svg
-      .append("g")
+      .append('g')
       .attr(
-        "transform",
+        'transform',
         `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
 
     vis.xAxisGroup = vis.chartArea
-      .append("g")
-      .attr("class", "x-axis")
-      .attr("transform", `translate(0, ${vis.height})`);
+      .append('g')
+      .attr('class', 'x-axis')
+      .attr('transform', `translate(0, ${vis.height})`);
 
-    vis.yAxisGroup = vis.chartArea.append("g").attr("class", "y-axis");
+    vis.yAxisGroup = vis.chartArea.append('g').attr('class', 'y-axis');
 
     vis.updateVis();
   }
 
   updateVis() {
-    let vis = this;
+    const vis = this;
 
     vis.yearCounts = d3
       .rollups(
@@ -90,24 +88,24 @@ class TotalMeteoriteDiscoveriesBarChart {
   }
 
   renderVis() {
-    let vis = this;
+    const vis = this;
 
     vis.bars = vis.chartArea
-      .selectAll(".bar")
+      .selectAll('.bar')
       .data(vis.yearCounts, (d) => d.year)
-      .join("rect")
-      .attr("class", "bar")
-      .attr("x", (d) => vis.xScale(d.year))
-      .attr("y", (d) => vis.yScale(d.count))
-      .attr("width", vis.xScale.bandwidth())
-      .attr("height", (d) => vis.height - vis.yScale(d.count));
+      .join('rect')
+      .attr('class', 'bar')
+      .attr('x', (d) => vis.xScale(d.year))
+      .attr('y', (d) => vis.yScale(d.count))
+      .attr('width', vis.xScale.bandwidth())
+      .attr('height', (d) => vis.height - vis.yScale(d.count));
 
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);
 
     vis.xAxisGroup
-      .selectAll("text")
-      .attr("transform", "rotate(-45)")
-      .style("text-anchor", "end");
+      .selectAll('text')
+      .attr('transform', 'rotate(-45)')
+      .style('text-anchor', 'end');
   }
 }

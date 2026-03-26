@@ -7,13 +7,17 @@
  * - UBC InfoVis 447 Tutorial 3 (Data joins): selectAll().data().join()
  * - UBC InfoVis 447 Tutorial 5 (Multiple views and advanced interactivity): linking
  */
-class Task3CountryLandingsBarChart {
+import mapUtils from '../utils/mapUtils.js';
+
+export default class Task3CountryLandingsBarChart {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 280,
       containerHeight: _config.containerHeight || 200,
-      margin: { top: 20, right: 10, bottom: 60, left: 45 },
+      margin: {
+        top: 20, right: 10, bottom: 60, left: 45,
+      },
       topN: _config.topN ?? 12,
       onCountrySelect: _config.onCountrySelect ?? (() => {}),
     };
@@ -23,24 +27,22 @@ class Task3CountryLandingsBarChart {
 
   initVis() {
     const vis = this;
-    vis.width =
-      vis.config.containerWidth -
-      vis.config.margin.left -
-      vis.config.margin.right;
-    vis.height =
-      vis.config.containerHeight -
-      vis.config.margin.top -
-      vis.config.margin.bottom;
+    vis.width = vis.config.containerWidth
+      - vis.config.margin.left
+      - vis.config.margin.right;
+    vis.height = vis.config.containerHeight
+      - vis.config.margin.top
+      - vis.config.margin.bottom;
 
     vis.svg = d3
       .select(vis.config.parentElement)
-      .append("svg")
-      .attr("width", vis.config.containerWidth)
-      .attr("height", vis.config.containerHeight)
-      .append("g")
+      .append('svg')
+      .attr('width', vis.config.containerWidth)
+      .attr('height', vis.config.containerHeight)
+      .append('g')
       .attr(
-        "transform",
-        `translate(${vis.config.margin.left},${vis.config.margin.top})`
+        'transform',
+        `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
   }
 
@@ -56,7 +58,7 @@ class Task3CountryLandingsBarChart {
     const rest = sorted.slice(vis.config.topN);
     const othersCount = rest.reduce((s, d) => s + d.count, 0);
     if (othersCount > 0) {
-      top.push({ country: "Others", count: othersCount, isOthers: true });
+      top.push({ country: 'Others', count: othersCount, isOthers: true });
     }
     vis.barData = top;
   }
@@ -78,53 +80,47 @@ class Task3CountryLandingsBarChart {
 
   renderVis() {
     const vis = this;
-    vis.svg.selectAll(".axis").remove();
-    vis.svg.selectAll(".bars").remove();
+    vis.svg.selectAll('.axis').remove();
+    vis.svg.selectAll('.bars').remove();
 
     vis.svg
-      .append("g")
-      .attr("class", "axis axis-x")
-      .attr("transform", `translate(0,${vis.height})`)
+      .append('g')
+      .attr('class', 'axis axis-x')
+      .attr('transform', `translate(0,${vis.height})`)
       .call(
         d3
           .axisBottom(vis.xScale)
           .tickSizeOuter(0)
-          .tickValues(vis.barData.map((d) => d.country))
+          .tickValues(vis.barData.map((d) => d.country)),
       )
-      .selectAll("text")
-      .attr("transform", "rotate(-45)")
-      .attr("text-anchor", "end")
-      .attr("dx", "-0.5em")
-      .attr("dy", "0.5em");
+      .selectAll('text')
+      .attr('transform', 'rotate(-45)')
+      .attr('text-anchor', 'end')
+      .attr('dx', '-0.5em')
+      .attr('dy', '0.5em');
 
-    vis.svg.append("g").attr("class", "axis axis-y").call(d3.axisLeft(vis.yScale));
+    vis.svg.append('g').attr('class', 'axis axis-y').call(d3.axisLeft(vis.yScale));
 
     const bars = vis.svg
-      .append("g")
-      .attr("class", "bars")
-      .selectAll(".bar")
+      .append('g')
+      .attr('class', 'bars')
+      .selectAll('.bar')
       .data(vis.barData)
-      .join("rect")
-      .attr("class", "bar")
-      .attr("x", (d) => vis.xScale(d.country))
-      .attr("y", (d) => vis.yScale(d.count))
-      .attr("width", vis.xScale.bandwidth())
-      .attr("height", (d) => vis.height - vis.yScale(d.count))
-      .attr("fill", (d) =>
-        d.country === vis.selectedCountry ? "#e74c3c" : "#3498db"
-      )
-      .attr("opacity", (d) =>
-        d.isOthers && vis.selectedCountry ? 0.5 : 1
-      )
-      .style("cursor", (d) => (d.isOthers ? "default" : "pointer"))
-      .on("click", (event, d) => {
+      .join('rect')
+      .attr('class', 'bar')
+      .attr('x', (d) => vis.xScale(d.country))
+      .attr('y', (d) => vis.yScale(d.count))
+      .attr('width', vis.xScale.bandwidth())
+      .attr('height', (d) => vis.height - vis.yScale(d.count))
+      .attr('fill', (d) => (d.country === vis.selectedCountry ? '#e74c3c' : '#3498db'))
+      .attr('opacity', (d) => (d.isOthers && vis.selectedCountry ? 0.5 : 1))
+      .style('cursor', (d) => (d.isOthers ? 'default' : 'pointer'))
+      .on('click', (event, d) => {
         if (d.isOthers) return;
         vis.config.onCountrySelect(d.country);
       });
 
-    bars.append("title").text((d) =>
-      d.isOthers ? `Others: ${d.count} meteorites` : `${d.country}: ${d.count} meteorites`
-    );
+    bars.append('title').text((d) => (d.isOthers ? `Others: ${d.count} meteorites` : `${d.country}: ${d.count} meteorites`));
   }
 
   setSelectedCountry(country) {

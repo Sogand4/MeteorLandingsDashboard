@@ -2,6 +2,9 @@
  * Task 4 – Orchestrator
  * Creates the meteorite distribution bar charts and sizes it to its container.
  */
+import TopMeteoriteDistributionBarChart from './topMeteoriteDistributionBarChart.js';
+import TotalMeteoriteDiscoveriesBarChart from './totalMeteoriteDiscoveriesBarChart.js';
+
 const Task4 = {
   totalMeteoriteDiscoveriesBarChart: null,
   topMeteoriteDistributionBarChart: null,
@@ -23,26 +26,26 @@ const Task4 = {
 
     const barSize = Task4.getContainerSize(barChartContainer);
 
-    Task4.totalMeteoriteDiscoveriesBarChart =
-      new TotalMeteoriteDiscoveriesBarChart(
-        {
-          parentElement: "#total-meteorite-discoveries-bar-chart",
-          containerWidth: barSize.width,
-          containerHeight: barSize.height,
-        },
-        data,
-      );
+    Task4.totalMeteoriteDiscoveriesBarChart = new TotalMeteoriteDiscoveriesBarChart(
+      {
+        parentElement: '#total-meteorite-discoveries-bar-chart',
+        containerWidth: barSize.width,
+        containerHeight: barSize.height,
+      },
+      data,
+    );
 
-    Task4.topMeteoriteDistributionBarChart =
-      new TopMeteoriteDistributionBarChart(
-        {
-          parentElement: "#top-meteorite-distribution-bar-chart",
-          containerWidth: barSize.width,
-          containerHeight: barSize.height,
-        },
-        data,
-      );
+    Task4.topMeteoriteDistributionBarChart = new TopMeteoriteDistributionBarChart(
+      {
+        parentElement: '#top-meteorite-distribution-bar-chart',
+        containerWidth: barSize.width,
+        containerHeight: barSize.height,
+      },
+      data,
+    );
 
     return Task4;
   },
 };
+
+export default Task4;
