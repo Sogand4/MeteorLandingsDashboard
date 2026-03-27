@@ -5,10 +5,10 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       containerWidth: _config.containerWidth || 240,
       containerHeight: _config.containerHeight || 260,
       margin: {
-        top: 55,
-        right: 5,
-        bottom: 50,
-        left: 40,
+        top: 62,
+        right: 20,
+        bottom: 26,
+        left: 65,
       },
     };
     this.data = data;
@@ -29,8 +29,8 @@ export default class TotalMeteoriteDiscoveriesBarChart {
     vis.xScale = d3.scaleBand().range([0, vis.width]).padding(0.15);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
-    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('d')).ticks(5);
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`).tickSizeOuter(0);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('d')).ticks(5).tickSizeOuter(0);
 
     vis.svg = d3
       .select(vis.config.parentElement)
@@ -61,6 +61,15 @@ export default class TotalMeteoriteDiscoveriesBarChart {
 
     vis.yAxisGroup = vis.chartArea.append('g').attr('class', 'y-axis');
 
+    vis.chartArea
+      .append('text')
+      .attr('class', 'axis-label')
+      .attr('transform', 'rotate(-90)')
+      .attr('x', -vis.height / 2)
+      .attr('y', -vis.config.margin.left + 20)
+      .attr('text-anchor', 'middle')
+      .text('Number of Discoveries');
+
     vis.typeTrendLine = vis.chartArea
       .append('path')
       .attr('class', 'type-trend-line')
@@ -88,7 +97,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
     vis.yearCounts.sort((a, b) => a.year - b.year);
 
     vis.xScale.domain(vis.yearCounts.map((d) => d.year));
-    vis.yScale.domain([0, d3.max(vis.yearCounts, (d) => d.count)]);
+    vis.yScale.domain([0, d3.max(vis.yearCounts, (d) => d.count)]).nice();
 
     vis.renderVis();
   }
@@ -162,7 +171,6 @@ export default class TotalMeteoriteDiscoveriesBarChart {
 
     vis.xAxisGroup
       .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
+      .style('text-anchor', 'middle');
   }
 }

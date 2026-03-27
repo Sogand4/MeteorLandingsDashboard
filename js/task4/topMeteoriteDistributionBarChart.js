@@ -5,10 +5,10 @@ export default class TopMeteoriteDistributionBarChart {
       containerWidth: _config.containerWidth || 240,
       containerHeight: _config.containerHeight || 260,
       margin: {
-        top: 55,
+        top: 62,
         right: 5,
-        bottom: 50,
-        left: 40,
+        bottom: 26,
+        left: 65,
       },
     };
     this.data = data;
@@ -31,8 +31,8 @@ export default class TopMeteoriteDistributionBarChart {
 
     vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
 
-    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('.0%')).ticks(5);
+    vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`).tickSizeOuter(0);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('.0%')).ticks(5).tickSizeOuter(0);
 
     vis.svg = d3
       .select(vis.config.parentElement)
@@ -62,6 +62,15 @@ export default class TopMeteoriteDistributionBarChart {
       .attr('transform', `translate(0, ${vis.height})`);
 
     vis.yAxisGroup = vis.chartArea.append('g').attr('class', 'y-axis');
+
+    vis.chartArea
+      .append('text')
+      .attr('class', 'axis-label')
+      .attr('transform', 'rotate(-90)')
+      .attr('x', -vis.height / 2)
+      .attr('y', -vis.config.margin.left + 20)
+      .attr('text-anchor', 'middle')
+      .text('Percentage of Discoveries');
 
     vis.legendGroup = vis.svg
       .append('g')
@@ -232,7 +241,6 @@ export default class TopMeteoriteDistributionBarChart {
 
     vis.xAxisGroup
       .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
+      .style('text-anchor', 'middle');
   }
 }
