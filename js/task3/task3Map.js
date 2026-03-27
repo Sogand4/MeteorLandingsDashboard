@@ -23,6 +23,7 @@ export default class Task3Map {
     this.data = data;
     this.countries = null;
     this.selectedCountry = null;
+    this.selectedClass = null;
   }
 
   initVis() {
@@ -72,6 +73,9 @@ export default class Task3Map {
     if (vis.selectedCountry) {
       filtered = filtered.filter((d) => d.country === vis.selectedCountry);
     }
+    if (vis.selectedClass) {
+      filtered = filtered.filter((d) => d.recclass === vis.selectedClass);
+    }
 
     vis.filteredData = filtered.map((d) => ({
       ...d,
@@ -117,8 +121,11 @@ export default class Task3Map {
     const rawMax = d3.max(vis.bins, (b) => b.length);
     vis.minCount = Number.isFinite(rawMin) ? rawMin : 0;
     vis.maxCount = Number.isFinite(rawMax) ? Math.max(rawMax, vis.minCount, 1) : 1;
-    const domainMax = vis.minCount === vis.maxCount ? Math.max(vis.minCount, 1) : vis.maxCount;
-    vis.colorScale = d3.scaleSequential(d3.interpolateYlOrRd).domain([0, domainMax]);
+    /** Log10(1+x) color scale reduces skew from extreme-density hotspots (feedback: log scaling). */
+    vis.logMin = Math.log10(1 + Math.max(0, vis.minCount));
+    vis.logMax = Math.log10(1 + Math.max(vis.maxCount, 1));
+    if (vis.logMax <= vis.logMin) vis.logMax = vis.logMin + 1e-9;
+    vis.colorScale = d3.scaleSequential(d3.interpolateYlOrRd).domain([vis.logMin, vis.logMax]);
     vis.legendSteps = Math.min(5, Math.max(0, Math.round(vis.maxCount - vis.minCount)));
   }
 
@@ -159,7 +166,7 @@ export default class Task3Map {
       .join('path')
       .attr('d', vis.hexbin.hexagon())
       .attr('transform', (d) => `translate(${d.x},${d.y})`)
-      .attr('fill', (d) => vis.colorScale(d.length))
+      .attr('fill', (d) => vis.colorScale(Math.log10(1 + d.length)))
       .attr('stroke', '#fff')
       .attr('stroke-width', 0.5)
       .attr('opacity', 0.85);
@@ -254,6 +261,8 @@ export default class Task3Map {
     const safeMin = Number.isFinite(vis.minCount) ? vis.minCount : 0;
     const safeMax = Number.isFinite(vis.maxCount) ? Math.max(vis.maxCount, safeMin, 1) : 1;
     const steps = Math.min(5, Math.max(0, Math.round(safeMax - safeMin)));
+    const logLo = vis.logMin;
+    const logHi = vis.logMax;
     const barWidth = 20;
     const barHeight = 18;
     const labelOffset = 28;
@@ -283,19 +292,21 @@ export default class Task3Map {
       .attr('y', 8)
       .attr('font-size', 9)
       .attr('fill', '#666')
-      .text('(count per hexbin)');
+      .text('(count per hexbin, log color scale)');
 
     for (let i = 0; i <= steps; i++) {
-      const v = steps > 0
-        ? safeMin + (i / steps) * (safeMax - safeMin)
-        : safeMin;
-      const lo = steps > 0
-        ? safeMin + (i / steps) * (safeMax - safeMin)
-        : safeMin;
-      const hi = steps > 0 && i < steps
-        ? safeMin + ((i + 1) / steps) * (safeMax - safeMin)
-        : safeMax;
-      const label = `${fmt(lo)}–${fmt(hi)}`;
+      const logA = steps === 0
+        ? logLo
+        : logLo + (i / steps) * (logHi - logLo);
+      const logB = steps === 0
+        ? logHi
+        : (i < steps
+          ? logLo + ((i + 1) / steps) * (logHi - logLo)
+          : logHi);
+      const countLo = Math.max(0, Math.floor(10 ** logA - 1));
+      const countHi = Math.max(countLo, Math.ceil(10 ** logB - 1));
+      const label = `${fmt(countLo)}–${fmt(countHi)}`;
+      const logMid = (logA + logB) / 2;
       const y = 18 + i * barHeight;
 
       legend
@@ -304,7 +315,7 @@ export default class Task3Map {
         .attr('y', y)
         .attr('width', barWidth)
         .attr('height', barHeight - 2)
-        .attr('fill', vis.colorScale(v));
+        .attr('fill', vis.colorScale(logMid));
 
       legend
         .append('text')
@@ -319,6 +330,10 @@ export default class Task3Map {
 
   setSelectedCountry(country) {
     this.selectedCountry = country;
+  }
+
+  setSelectedClass(recclass) {
+    this.selectedClass = recclass;
   }
 
   show() {

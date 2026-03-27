@@ -96,8 +96,23 @@ function initCountrySearchFilter(data, onSelect) {
   };
 }
 
-d3.csv('data/meteorite_with_country_population_cleaned.csv').then((raw) => {
+function populateClassFilter(data) {
+  const classes = [...new Set(data.map((d) => d.recclass).filter(Boolean))].sort();
+  const select = document.getElementById('filter-class');
+  if (!select) return;
+  select.innerHTML = '<option value="">All classes</option>';
+  classes.forEach((c) => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    select.appendChild(opt);
+  });
+}
+
+d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
   const data = raw.map(parseMeteoriteRow);
+
+  populateClassFilter(data);
 
   let countryFilterRef = null;
 
@@ -115,6 +130,21 @@ d3.csv('data/meteorite_with_country_population_cleaned.csv').then((raw) => {
   };
 
   countryFilterRef = initCountrySearchFilter(data, applyCountryFilter);
+
+  const filterClass = document.getElementById('filter-class');
+  if (filterClass) {
+    filterClass.addEventListener('change', () => {
+      const recclass = filterClass.value || null;
+      if (MapWrapper.densityMap) {
+        MapWrapper.densityMap.setSelectedClass(recclass);
+        MapWrapper.densityMap.update(data);
+      }
+      if (MapWrapper.pointsMap && MapWrapper.pointsMap.setSelectedClass) {
+        MapWrapper.pointsMap.setSelectedClass(recclass);
+        MapWrapper.pointsMap.update(data);
+      }
+    });
+  }
 
   requestAnimationFrame(() => {
     MapWrapper.init({
