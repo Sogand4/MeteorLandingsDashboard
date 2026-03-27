@@ -116,7 +116,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
         vis.dispatcher.call('hoverTotalMeteoriteBucket', event, null);
       });
 
-    vis.dispatcher.on('hoverMeteoriteType.totalChart', (payload) => {
+    vis.dispatcher.on('hoverMeteoriteType', (payload) => {
       if (payload == null) {
         vis.typeTrendLine
           .attr('display', 'none')
