@@ -67,8 +67,6 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .append('path')
       .attr('class', 'type-trend-line')
       .attr('fill', 'none')
-      .attr('stroke', 'blue')
-      .attr('stroke-width', 2)
       .attr('display', 'none')
       .style('pointer-events', 'none');
 
@@ -121,6 +119,8 @@ export default class TotalMeteoriteDiscoveriesBarChart {
         vis.typeTrendLine
           .attr('display', 'none')
           .datum([]);
+
+        vis.bars.classed('is-dimmed', false);
         return;
       }
 
@@ -146,6 +146,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
         };
       });
 
+      vis.bars.classed('is-dimmed', true);
       vis.typeTrendLine
         .datum(trendData)
         .attr('display', null)

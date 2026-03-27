@@ -288,7 +288,7 @@ body {
   fill: #666;
 }
 
-/* Vis 4 */
+/* Vis 4 - bar charts */
 
 .stack-layer rect {
   transition: opacity 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
@@ -302,7 +302,18 @@ body {
   opacity: 1;
 }
 
+#total-meteorite-discoveries-bar-chart-svg .bar {
+  fill: #828282;
+  transition: opacity 150ms ease;
+}
+
+#total-meteorite-discoveries-bar-chart-svg .bar.is-dimmed {
+  opacity: 0.25;
+}
+
 .type-trend-line {
-  opacity: 1;
-  color: blue; /* TODO transfer to css properly */
+  stroke: #2f5597;
+  stroke-width: 2.5;
+  fill: none;
+  pointer-events: none;
 }
