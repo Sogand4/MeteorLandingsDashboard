@@ -84,7 +84,7 @@ export default class TopMeteoriteDistributionBarChart {
 
     vis.topRecclasses = recclassCounts
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
+      .slice(0, 4)
       .map((d) => d[0]);
 
     vis.stackKeys = [...vis.topRecclasses, 'Other'];
@@ -149,7 +149,16 @@ export default class TopMeteoriteDistributionBarChart {
       .data(vis.series, (d) => d.key)
       .join('g')
       .attr('class', 'stack-layer')
-      .attr('fill', (d) => vis.colorScale(d.key));
+      .attr('fill', (d) => vis.colorScale(d.key))
+      .on('mouseenter', (event, d) => {
+        vis.dispatcher.call('hoverMeteoriteType', event, {
+          recclass: d.key,
+          topRecclasses: vis.topRecclasses,
+        });
+      })
+      .on('mouseleave', () => {
+        vis.dispatcher.call('hoverMeteoriteType', null);
+      });
 
     const bars = layer
       .selectAll('rect')
@@ -158,7 +167,17 @@ export default class TopMeteoriteDistributionBarChart {
       .attr('x', (d) => vis.xScale(d.data.year))
       .attr('y', (d) => vis.yScale(d[1]))
       .attr('width', vis.xScale.bandwidth())
-      .attr('height', (d) => vis.yScale(d[0]) - vis.yScale(d[1]));
+      .attr('height', (d) => vis.yScale(d[0]) - vis.yScale(d[1]))
+      .on('mouseenter', (event, d) => {
+        bars
+          .classed('is-highlighted', (barData) => barData.key === d.key)
+          .classed('is-dimmed', (barData) => barData.key !== d.key);
+      })
+      .on('mouseleave', () => {
+        bars
+          .classed('is-highlighted', false)
+          .classed('is-dimmed', false);
+      });
 
     vis.dispatcher.on('hoverTotalMeteoriteBucket', (bucket) => {
       if (bucket == null) {

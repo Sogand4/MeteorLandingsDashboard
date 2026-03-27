@@ -6,7 +6,7 @@ import TopMeteoriteDistributionBarChart from './topMeteoriteDistributionBarChart
 import TotalMeteoriteDiscoveriesBarChart from './totalMeteoriteDiscoveriesBarChart.js';
 import FilterOutlierYears from '../utils/yearFilter.js';
 
-const dispatcher = d3.dispatch('hoverTotalMeteoriteBucket');
+const dispatcher = d3.dispatch('hoverTotalMeteoriteBucket', 'hoverMeteoriteType');
 
 const Task4 = {
   totalMeteoriteDiscoveriesBarChart: null,

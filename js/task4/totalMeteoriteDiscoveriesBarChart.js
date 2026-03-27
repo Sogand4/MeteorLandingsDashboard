@@ -63,6 +63,15 @@ export default class TotalMeteoriteDiscoveriesBarChart {
 
     vis.yAxisGroup = vis.chartArea.append('g').attr('class', 'y-axis');
 
+    vis.typeTrendLine = vis.chartArea
+      .append('path')
+      .attr('class', 'type-trend-line')
+      .attr('fill', 'none')
+      .attr('stroke', 'blue')
+      .attr('stroke-width', 2)
+      .attr('display', 'none')
+      .style('pointer-events', 'none');
+
     vis.updateVis();
   }
 
@@ -106,6 +115,48 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .on('mouseout', (event) => {
         vis.dispatcher.call('hoverTotalMeteoriteBucket', event, null);
       });
+
+    vis.dispatcher.on('hoverMeteoriteType.totalChart', (payload) => {
+      if (payload == null) {
+        vis.typeTrendLine
+          .attr('display', 'none')
+          .datum([]);
+        return;
+      }
+
+      const { recclass, topRecclasses } = payload;
+
+      const trendData = vis.yearCounts.map((bucketObj) => {
+        const bucketYear = bucketObj.year;
+
+        const bucketRows = vis.data.filter(
+          (row) => Math.floor(row.year / 10) * 10 === bucketYear,
+        );
+
+        const classCount = bucketRows.filter((row) => {
+          if (recclass === 'Other') {
+            return !topRecclasses.includes(row.recclass);
+          }
+          return row.recclass === recclass;
+        }).length;
+
+        return {
+          year: bucketYear,
+          count: classCount,
+        };
+      });
+
+      vis.typeTrendLine
+        .datum(trendData)
+        .attr('display', null)
+        .attr(
+          'd',
+          d3.line()
+            .x((d) => vis.xScale(d.year) + vis.xScale.bandwidth() / 2)
+            .y((d) => vis.yScale(d.count)),
+        )
+        .raise();
+    });
 
     vis.xAxisGroup.call(vis.xAxis);
     vis.yAxisGroup.call(vis.yAxis);

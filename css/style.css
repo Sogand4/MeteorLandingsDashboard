@@ -301,3 +301,8 @@ body {
 .stack-layer rect.is-highlighted {
   opacity: 1;
 }
+
+.type-trend-line {
+  opacity: 1;
+  color: blue; /* TODO transfer to css properly */
+}

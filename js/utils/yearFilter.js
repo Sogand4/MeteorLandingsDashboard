@@ -3,5 +3,5 @@
 */
 
 export default function FilterOutlierYears(data) {
-  return data.filter((d) => d.year >= 1960 && d.year <= 2009);
+  return data.filter((d) => d.year >= 1970 && d.year <= 2009);
 }
