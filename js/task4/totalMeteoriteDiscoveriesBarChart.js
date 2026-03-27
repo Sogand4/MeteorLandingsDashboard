@@ -115,9 +115,17 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .attr('width', vis.xScale.bandwidth())
       .attr('height', (d) => vis.height - vis.yScale(d.count))
       .on('mouseover', (event, d) => {
+        vis.bars
+          .classed('is-highlighted', (bar) => bar.year === d.year)
+          .classed('is-dimmed', (bar) => bar.year !== d.year);
+
         vis.dispatcher.call('hoverTotalMeteoriteBucket', event, d.year);
       })
       .on('mouseout', (event) => {
+        vis.bars
+          .classed('is-highlighted', false)
+          .classed('is-dimmed', false);
+
         vis.dispatcher.call('hoverTotalMeteoriteBucket', event, null);
       });
 
