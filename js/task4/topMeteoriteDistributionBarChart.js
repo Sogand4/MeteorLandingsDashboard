@@ -5,7 +5,7 @@ export default class TopMeteoriteDistributionBarChart {
       containerWidth: _config.containerWidth || 240,
       containerHeight: _config.containerHeight || 260,
       margin: {
-        top: 45,
+        top: 55,
         right: 5,
         bottom: 50,
         left: 40,
@@ -45,10 +45,8 @@ export default class TopMeteoriteDistributionBarChart {
       .append('text')
       .attr('class', 'chart-title')
       .attr('x', vis.config.containerWidth / 2)
-      .attr('y', 18)
+      .attr('y', 28)
       .attr('text-anchor', 'middle')
-      .style('font-size', '12px')
-      .style('font-weight', '600')
       .text('Top Meteorite Recclass Distribution by Decade');
 
     vis.chartArea = vis.svg
@@ -226,7 +224,7 @@ export default class TopMeteoriteDistributionBarChart {
 
     vis.legendGroup.attr(
       'transform',
-      `translate(${(vis.config.containerWidth - legendWidth) / 2}, 38)`,
+      `translate(${(vis.config.containerWidth - legendWidth) / 2}, 48)`,
     );
 
     vis.xAxisGroup.call(vis.xAxis);

@@ -175,7 +175,7 @@ body {
 /* Bottom row: scatterplot + temporal charts (33/33/33) */
 .bottom-charts {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 1;
   background: #fff;
   border-top: 1px solid #ddd;
@@ -214,6 +214,15 @@ body {
 
 #task3-country-bar svg {
   overflow: visible;
+}
+
+.chart-group {
+  display: flex;
+  flex-direction: row;
+}
+
+.chart-group .chart-container:first-child {
+  border-right: none;
 }
 
 /* Responsive: stack on narrow viewports */

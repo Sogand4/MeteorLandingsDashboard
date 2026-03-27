@@ -5,7 +5,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       containerWidth: _config.containerWidth || 240,
       containerHeight: _config.containerHeight || 260,
       margin: {
-        top: 45,
+        top: 55,
         right: 5,
         bottom: 50,
         left: 40,
@@ -43,10 +43,8 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .append('text')
       .attr('class', 'chart-title')
       .attr('x', vis.config.containerWidth / 2)
-      .attr('y', 18)
+      .attr('y', 28)
       .attr('text-anchor', 'middle')
-      .style('font-size', '12px')
-      .style('font-weight', '600')
       .text('Total Meteorite Discoveries Per Decade');
 
     vis.chartArea = vis.svg
