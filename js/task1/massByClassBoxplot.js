@@ -1,3 +1,10 @@
+/**
+ * References:
+ * - Boxplot in D3: https://d3-graph-gallery.com/graph/boxplot_basic.html
+ * - Boxplot tutorial: https://observablehq.com/@d3/box-plot/2
+*/
+
+// TODO: abstract top classes
 export default class MassByClassBoxPlot {
   constructor(_config, data) {
     this.config = {
@@ -11,9 +18,8 @@ export default class MassByClassBoxPlot {
         left: 60,
       },
     };
+
     this.data = data;
-    this.selectedClass1 = 'H5';
-    this.selectedClass2 = 'H6';
     this.initVis();
   }
 
@@ -23,6 +29,7 @@ export default class MassByClassBoxPlot {
     vis.width = vis.config.containerWidth
       - vis.config.margin.left
       - vis.config.margin.right;
+
     vis.height = vis.config.containerHeight
       - vis.config.margin.top
       - vis.config.margin.bottom;
@@ -36,51 +43,56 @@ export default class MassByClassBoxPlot {
       .style('font-size', '12px')
       .style('font-weight', '600')
       .style('margin-bottom', '8px')
-      .text('Mass Distribution for Two Meteorite Classes');
+      .text('Mass Distribution for Top Meteorite Classes');
 
-    const classes = Array.from(new Set(vis.data.map((d) => d.recclass))).sort();
+    const classCounts = d3.rollups(
+      vis.data.filter((d) => d.recclass && +d.mass > 0),
+      (values) => values.length,
+      (d) => d.recclass,
+    )
+      .sort((a, b) => d3.descending(a[1], b[1]));
+
+    vis.rankOrderedClasses = classCounts.map((d) => d[0]);
+
+    vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
+    vis.dropdownOptions = vis.rankOrderedClasses.slice(4).sort(d3.ascending);
+    vis.selectedDropdownClass = vis.rankOrderedClasses[4] || vis.rankOrderedClasses[0];
 
     vis.controls = vis.container
       .append('div')
       .attr('class', 'chart-controls')
       .style('display', 'flex')
       .style('justify-content', 'center')
+      .style('align-items', 'center')
       .style('gap', '8px')
       .style('margin-bottom', '8px');
 
-    vis.dropdown1 = vis.controls.append('select').attr('id', 'class-select-1');
+    vis.controls
+      .append('label')
+      .attr('for', 'class-select-5')
+      .style('font-size', '11px')
+      .text('5th class:');
 
-    vis.dropdown2 = vis.controls.append('select').attr('id', 'class-select-2');
+    vis.dropdown = vis.controls
+      .append('select')
+      .attr('id', 'class-select-5');
 
-    vis.dropdown1
+    vis.dropdown
       .selectAll('option')
-      .data(classes)
+      .data(vis.dropdownOptions)
       .join('option')
       .attr('value', (d) => d)
       .text((d) => d);
 
-    vis.dropdown2
-      .selectAll('option')
-      .data(classes)
-      .join('option')
-      .attr('value', (d) => d)
-      .text((d) => d);
-
-    vis.dropdown1.property('value', vis.selectedClass1);
-    vis.dropdown2.property('value', vis.selectedClass2);
+    vis.dropdown.property('value', vis.selectedDropdownClass);
 
     vis.yScale = d3.scaleLog().range([vis.height, 0]);
-    vis.xScale = d3
-      .scaleBand()
-      .domain([vis.selectedClass1, vis.selectedClass2])
+
+    vis.xScale = d3.scaleBand()
       .range([0, vis.width])
       .padding(0.3);
 
-    vis.xAxis = d3.axisBottom(vis.xScale);
-    vis.yAxis = d3
-      .axisLeft(vis.yScale)
-      .tickValues(d3.range(-2, 8).map((d) => 10 ** d))
-      .tickFormat(d3.format('.2f'));
+    vis.xAxis = d3.axisBottom(vis.xScale).tickSizeOuter(0);
 
     vis.svg = vis.container
       .append('svg')
@@ -100,7 +112,14 @@ export default class MassByClassBoxPlot {
       .attr('class', 'x-axis')
       .attr('transform', `translate(0, ${vis.height})`);
 
-    vis.yAxisGroup = vis.chartArea.append('g').attr('class', 'y-axis');
+    vis.yAxisGroup = vis.chartArea
+      .append('g')
+      .attr('class', 'y-axis');
+
+    vis.dropdown.on('change', () => {
+      vis.selectedDropdownClass = vis.dropdown.property('value');
+      vis.updateVis();
+    });
 
     vis.updateVis();
   }
@@ -108,11 +127,7 @@ export default class MassByClassBoxPlot {
   updateVis() {
     const vis = this;
 
-    vis.selectedClass1 = vis.dropdown1.property('value');
-    vis.selectedClass2 = vis.dropdown2.property('value');
-
-    vis.selectedClasses = [vis.selectedClass1, vis.selectedClass2];
-
+    vis.selectedClasses = [...vis.fixedClasses, vis.selectedDropdownClass];
     vis.xScale.domain(vis.selectedClasses);
 
     vis.boxData = vis.selectedClasses
@@ -124,39 +139,45 @@ export default class MassByClassBoxPlot {
 
         if (!values.length) return null;
 
+        const min = values[0];
+        const max = values[values.length - 1];
         const q1 = d3.quantile(values, 0.25);
         const median = d3.quantile(values, 0.5);
         const q3 = d3.quantile(values, 0.75);
         const iqr = q3 - q1;
 
-        const lowerFence = q1 - 1.5 * iqr;
-        const upperFence = q3 + 1.5 * iqr;
-
-        const inliers = values.filter(
-          (value) => value >= lowerFence && value <= upperFence,
-        );
-
-        const outliers = values.filter(
-          (value) => value < lowerFence || value > upperFence,
-        );
+        const r0 = Math.max(min, q1 - 1.5 * iqr);
+        const r1 = Math.min(max, q3 + 1.5 * iqr);
 
         return {
           recclass,
-          q1,
-          median,
-          q3,
-          min: d3.min(inliers),
-          max: d3.max(inliers),
-          outliers,
-          values,
+          quartiles: [q1, median, q3],
+          range: [r0, r1],
+          outliers: values.filter((value) => value < r0 || value > r1),
         };
       })
       .filter((d) => d !== null);
 
-    vis.yScale.domain([
-      d3.min(vis.boxData, (d) => d.min),
-      d3.max(vis.boxData, (d) => d.max),
+    const allVisibleValues = vis.boxData.flatMap((d) => [
+      d.range[0],
+      d.range[1],
+      ...d.outliers,
     ]);
+
+    const minVal = d3.min(allVisibleValues);
+    const maxVal = d3.max(allVisibleValues);
+
+    vis.yScale.domain([
+      minVal / 1.2,
+      maxVal * 1.2,
+    ]);
+
+    const [minY, maxY] = vis.yScale.domain();
+
+    vis.yTickValues = d3.range(
+      Math.ceil(Math.log10(minY)),
+      Math.floor(Math.log10(maxY)) + 1,
+    ).map((d) => 10 ** d);
 
     vis.renderVis();
   }
@@ -164,8 +185,11 @@ export default class MassByClassBoxPlot {
   renderVis() {
     const vis = this;
 
-    const boxWidth = Math.min(40, vis.xScale.bandwidth() * 0.6);
-    const colors = ['#4e79a7', '#f28e2b'];
+    const boxWidth = Math.min(42, vis.xScale.bandwidth() * 0.65);
+
+    const colorScale = d3.scaleOrdinal(d3.schemeTableau10)
+      .domain(vis.rankOrderedClasses);
+    const dropdownColor = d3.schemeTableau10[4];
 
     vis.boxGroups = vis.chartArea
       .selectAll('.box-group')
@@ -178,36 +202,14 @@ export default class MassByClassBoxPlot {
       );
 
     vis.boxGroups
-      .selectAll('.whisker-line')
+      .selectAll('.range-line')
       .data((d) => [d])
       .join('line')
-      .attr('class', 'whisker-line')
+      .attr('class', 'range-line')
       .attr('x1', 0)
       .attr('x2', 0)
-      .attr('y1', (d) => vis.yScale(d.min))
-      .attr('y2', (d) => vis.yScale(d.max))
-      .attr('stroke', '#444');
-
-    vis.boxGroups
-      .selectAll('.whisker-top')
-      .data((d) => [d])
-      .join('line')
-      .attr('class', 'whisker-top')
-      .attr('x1', -boxWidth / 3)
-      .attr('x2', boxWidth / 3)
-      .attr('y1', (d) => vis.yScale(d.max))
-      .attr('y2', (d) => vis.yScale(d.max))
-      .attr('stroke', '#444');
-
-    vis.boxGroups
-      .selectAll('.whisker-bottom')
-      .data((d) => [d])
-      .join('line')
-      .attr('class', 'whisker-bottom')
-      .attr('x1', -boxWidth / 3)
-      .attr('x2', boxWidth / 3)
-      .attr('y1', (d) => vis.yScale(d.min))
-      .attr('y2', (d) => vis.yScale(d.min))
+      .attr('y1', (d) => vis.yScale(d.range[0]))
+      .attr('y2', (d) => vis.yScale(d.range[1]))
       .attr('stroke', '#444');
 
     vis.boxGroups
@@ -217,9 +219,11 @@ export default class MassByClassBoxPlot {
       .attr('class', 'box')
       .attr('x', -boxWidth / 2)
       .attr('width', boxWidth)
-      .attr('y', (d) => vis.yScale(d.q3))
-      .attr('height', (d) => vis.yScale(d.q1) - vis.yScale(d.q3))
-      .attr('fill', (d) => colors[vis.selectedClasses.indexOf(d.recclass)])
+      .attr('y', (d) => vis.yScale(d.quartiles[2]))
+      .attr('height', (d) => vis.yScale(d.quartiles[0]) - vis.yScale(d.quartiles[2]))
+      .attr('fill', (d) => (d.recclass === vis.selectedDropdownClass
+        ? dropdownColor
+        : colorScale(d.recclass)))
       .attr('fill-opacity', 0.45)
       .attr('stroke', '#444');
 
@@ -230,23 +234,56 @@ export default class MassByClassBoxPlot {
       .attr('class', 'median-line')
       .attr('x1', -boxWidth / 2)
       .attr('x2', boxWidth / 2)
-      .attr('y1', (d) => vis.yScale(d.median))
-      .attr('y2', (d) => vis.yScale(d.median))
+      .attr('y1', (d) => vis.yScale(d.quartiles[1]))
+      .attr('y2', (d) => vis.yScale(d.quartiles[1]))
       .attr('stroke', '#111')
       .attr('stroke-width', 1.5);
 
     vis.boxGroups
+      .selectAll('.range-cap-top')
+      .data((d) => [d])
+      .join('line')
+      .attr('class', 'range-cap-top')
+      .attr('x1', -boxWidth / 4)
+      .attr('x2', boxWidth / 4)
+      .attr('y1', (d) => vis.yScale(d.range[1]))
+      .attr('y2', (d) => vis.yScale(d.range[1]))
+      .attr('stroke', '#444');
+
+    vis.boxGroups
+      .selectAll('.range-cap-bottom')
+      .data((d) => [d])
+      .join('line')
+      .attr('class', 'range-cap-bottom')
+      .attr('x1', -boxWidth / 4)
+      .attr('x2', boxWidth / 4)
+      .attr('y1', (d) => vis.yScale(d.range[0]))
+      .attr('y2', (d) => vis.yScale(d.range[0]))
+      .attr('stroke', '#444');
+
+    vis.boxGroups
       .selectAll('.outlier')
-      .data((d) => d.outliers.map((value) => ({ recclass: d.recclass, value })))
+      .data((d) => d.outliers.map((value) => ({
+        recclass: d.recclass,
+        value,
+      })))
       .join('circle')
       .attr('class', 'outlier')
-      .attr('cx', 0)
+      .attr('r', 2)
+      .attr('cx', () => (Math.random() - 0.5) * 6)
       .attr('cy', (d) => vis.yScale(d.value))
-      .attr('r', 2.5)
-      .attr('fill', (d) => colors[vis.selectedClasses.indexOf(d.recclass)])
-      .attr('fill-opacity', 0.7);
+      .attr('fill', (d) => (d.recclass === vis.selectedDropdownClass
+        ? dropdownColor
+        : colorScale(d.recclass)))
+      .attr('fill-opacity', 0.35)
+      .attr('stroke', 'none');
 
     vis.xAxisGroup.call(vis.xAxis);
+    vis.yAxis = d3.axisLeft(vis.yScale)
+      .tickValues(vis.yTickValues)
+      .tickFormat(d3.format('~s'))
+      .tickSizeOuter(0);
+
     vis.yAxisGroup.call(vis.yAxis);
 
     vis.yAxisGroup
