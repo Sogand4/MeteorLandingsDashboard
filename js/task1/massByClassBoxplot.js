@@ -14,7 +14,7 @@ export default class MassByClassBoxPlot {
       margin: {
         top: 20,
         right: 20,
-        bottom: 50,
+        bottom: 65,
         left: 60,
       },
     };
@@ -278,7 +278,6 @@ export default class MassByClassBoxPlot {
       .attr('fill-opacity', 0.35)
       .attr('stroke', 'none');
 
-    vis.xAxisGroup.call(vis.xAxis);
     vis.yAxis = d3.axisLeft(vis.yScale)
       .tickValues(vis.yTickValues)
       .tickFormat(d3.format('~s'))
@@ -297,6 +296,19 @@ export default class MassByClassBoxPlot {
       .attr('fill', 'black')
       .attr('text-anchor', 'middle')
       .style('font-size', '10px')
-      .text('Mass (log scale)');
+      .text('Mass (g, log scale)');
+
+    vis.xAxisGroup.call(vis.xAxis);
+    vis.xAxisGroup
+      .selectAll('.axis-label')
+      .data([null])
+      .join('text')
+      .attr('class', 'axis-label')
+      .attr('x', vis.width / 2)
+      .attr('y', 35)
+      .attr('fill', 'black')
+      .attr('text-anchor', 'middle')
+      .style('font-size', '10px')
+      .text('Meteorite Class');
   }
 }
