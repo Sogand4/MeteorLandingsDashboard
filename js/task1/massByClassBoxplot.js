@@ -3,8 +3,6 @@
  * - Boxplot in D3: https://d3-graph-gallery.com/graph/boxplot_basic.html
  * - Boxplot tutorial: https://observablehq.com/@d3/box-plot/2
 */
-
-// TODO: abstract top classes
 export default class MassByClassBoxPlot {
   constructor(_config, data) {
     this.config = {
@@ -39,10 +37,6 @@ export default class MassByClassBoxPlot {
     vis.title = vis.container
       .append('div')
       .attr('class', 'chart-title')
-      .style('text-align', 'center')
-      .style('font-size', '12px')
-      .style('font-weight', '600')
-      .style('margin-bottom', '8px')
       .text('Mass Distribution for Top Meteorite Classes');
 
     const classCounts = d3.rollups(
@@ -54,23 +48,19 @@ export default class MassByClassBoxPlot {
 
     vis.rankOrderedClasses = classCounts.map((d) => d[0]);
 
+    // Show the top 4 most frequent recclasses as fixed boxplots
+    // The 5th slot is user-controlled via dropdown and defaults to the 5th most frequent class
     vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
     vis.dropdownOptions = vis.rankOrderedClasses.slice(4).sort(d3.ascending);
     vis.selectedDropdownClass = vis.rankOrderedClasses[4] || vis.rankOrderedClasses[0];
 
     vis.controls = vis.container
       .append('div')
-      .attr('class', 'chart-controls')
-      .style('display', 'flex')
-      .style('justify-content', 'center')
-      .style('align-items', 'center')
-      .style('gap', '8px')
-      .style('margin-bottom', '8px');
+      .attr('class', 'chart-controls');
 
     vis.controls
       .append('label')
       .attr('for', 'class-select-5')
-      .style('font-size', '11px')
       .text('5th class:');
 
     vis.dropdown = vis.controls
@@ -158,6 +148,7 @@ export default class MassByClassBoxPlot {
       })
       .filter((d) => d !== null);
 
+    // Include outliers in the visible domain so they are not clipped
     const allVisibleValues = vis.boxData.flatMap((d) => [
       d.range[0],
       d.range[1],
@@ -167,6 +158,7 @@ export default class MassByClassBoxPlot {
     const minVal = d3.min(allVisibleValues);
     const maxVal = d3.max(allVisibleValues);
 
+    // Add padding
     vis.yScale.domain([
       minVal / 1.2,
       maxVal * 1.2,
@@ -174,6 +166,8 @@ export default class MassByClassBoxPlot {
 
     const [minY, maxY] = vis.yScale.domain();
 
+    // The y-position uses a log scale,
+    // but tick labels show the original mass values in grams to help interpretability
     vis.yTickValues = d3.range(
       Math.ceil(Math.log10(minY)),
       Math.floor(Math.log10(maxY)) + 1,
@@ -189,6 +183,8 @@ export default class MassByClassBoxPlot {
 
     const colorScale = d3.scaleOrdinal(d3.schemeTableau10)
       .domain(vis.rankOrderedClasses);
+    // Keep the dropdown-selected class visually consistent by assigning it a
+    // static color, regardless of which recclass is selected
     const dropdownColor = d3.schemeTableau10[4];
 
     vis.boxGroups = vis.chartArea
@@ -209,8 +205,7 @@ export default class MassByClassBoxPlot {
       .attr('x1', 0)
       .attr('x2', 0)
       .attr('y1', (d) => vis.yScale(d.range[0]))
-      .attr('y2', (d) => vis.yScale(d.range[1]))
-      .attr('stroke', '#444');
+      .attr('y2', (d) => vis.yScale(d.range[1]));
 
     vis.boxGroups
       .selectAll('.box')
@@ -223,9 +218,7 @@ export default class MassByClassBoxPlot {
       .attr('height', (d) => vis.yScale(d.quartiles[0]) - vis.yScale(d.quartiles[2]))
       .attr('fill', (d) => (d.recclass === vis.selectedDropdownClass
         ? dropdownColor
-        : colorScale(d.recclass)))
-      .attr('fill-opacity', 0.45)
-      .attr('stroke', '#444');
+        : colorScale(d.recclass)));
 
     vis.boxGroups
       .selectAll('.median-line')
@@ -235,9 +228,7 @@ export default class MassByClassBoxPlot {
       .attr('x1', -boxWidth / 2)
       .attr('x2', boxWidth / 2)
       .attr('y1', (d) => vis.yScale(d.quartiles[1]))
-      .attr('y2', (d) => vis.yScale(d.quartiles[1]))
-      .attr('stroke', '#111')
-      .attr('stroke-width', 1.5);
+      .attr('y2', (d) => vis.yScale(d.quartiles[1]));
 
     vis.boxGroups
       .selectAll('.range-cap-top')
@@ -247,8 +238,7 @@ export default class MassByClassBoxPlot {
       .attr('x1', -boxWidth / 4)
       .attr('x2', boxWidth / 4)
       .attr('y1', (d) => vis.yScale(d.range[1]))
-      .attr('y2', (d) => vis.yScale(d.range[1]))
-      .attr('stroke', '#444');
+      .attr('y2', (d) => vis.yScale(d.range[1]));
 
     vis.boxGroups
       .selectAll('.range-cap-bottom')
@@ -258,8 +248,7 @@ export default class MassByClassBoxPlot {
       .attr('x1', -boxWidth / 4)
       .attr('x2', boxWidth / 4)
       .attr('y1', (d) => vis.yScale(d.range[0]))
-      .attr('y2', (d) => vis.yScale(d.range[0]))
-      .attr('stroke', '#444');
+      .attr('y2', (d) => vis.yScale(d.range[0]));
 
     vis.boxGroups
       .selectAll('.outlier')
@@ -269,14 +258,11 @@ export default class MassByClassBoxPlot {
       })))
       .join('circle')
       .attr('class', 'outlier')
-      .attr('r', 2)
-      .attr('cx', () => (Math.random() - 0.5) * 6)
+      .attr('cx', 0)
       .attr('cy', (d) => vis.yScale(d.value))
       .attr('fill', (d) => (d.recclass === vis.selectedDropdownClass
         ? dropdownColor
-        : colorScale(d.recclass)))
-      .attr('fill-opacity', 0.35)
-      .attr('stroke', 'none');
+        : colorScale(d.recclass)));
 
     vis.yAxis = d3.axisLeft(vis.yScale)
       .tickValues(vis.yTickValues)
@@ -292,10 +278,8 @@ export default class MassByClassBoxPlot {
       .attr('class', 'axis-label')
       .attr('x', -vis.height / 2)
       .attr('y', -42)
-      .attr('transform', 'rotate(-90)')
-      .attr('fill', 'black')
       .attr('text-anchor', 'middle')
-      .style('font-size', '10px')
+      .attr('transform', 'rotate(-90)')
       .text('Mass (g, log scale)');
 
     vis.xAxisGroup.call(vis.xAxis);
@@ -306,9 +290,6 @@ export default class MassByClassBoxPlot {
       .attr('class', 'axis-label')
       .attr('x', vis.width / 2)
       .attr('y', 35)
-      .attr('fill', 'black')
-      .attr('text-anchor', 'middle')
-      .style('font-size', '10px')
       .text('Meteorite Class');
   }
 }
