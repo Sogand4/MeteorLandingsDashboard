@@ -24,12 +24,14 @@ const Task2 = {
 
     Task2.populationDensityScatterPlot = new PopulationDensityScatterPlot(
       {
-        parentElement: "#population-density-scatter",
+        parentElement: scatterplotContainer,
         containerWidth: plotSize.width,
         containerHeight: plotSize.height,
       },
-      data,
+      data
     );
+
+    Task2.populationDensityScatterPlot.updateVis();
 
     return Task2;
   },
