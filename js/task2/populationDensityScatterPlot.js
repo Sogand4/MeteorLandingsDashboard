@@ -1,10 +1,10 @@
-export default class PopulationDensityScatterPlot {
+class PopulationDensityScatterPlot {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 700,
-      containerHeight: _config.containerHeight || 360,
-      margin: { top: 60, right: 25, bottom: 65, left: 85 }
+      containerHeight: _config.containerHeight || 460,
+      margin: { top: 60, right: 25, bottom: 65, left: 95 }
     };
     this.data = data;
     this.initVis();
@@ -38,12 +38,10 @@ export default class PopulationDensityScatterPlot {
       .attr("height", vis.height);
 
     vis.chart = vis.svg
-      .append('g')
+      .append("g")
       .attr(
         "transform",
         `translate(${vis.config.margin.left},${vis.config.margin.top})`
-        'transform',
-        `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
 
     vis.plotArea = vis.chart
@@ -59,9 +57,9 @@ export default class PopulationDensityScatterPlot {
       .text("Meteorite Landings vs. Population Density");
 
     vis.xAxisGroup = vis.chart
-      .append('g')
-      .attr('class', 'axis axis-x')
-      .attr('transform', `translate(0, ${vis.height})`);
+      .append("g")
+      .attr("class", "axis axis-x")
+      .attr("transform", `translate(0, ${vis.height})`);
 
     vis.yAxisGroup = vis.chart
       .append("g")
@@ -85,11 +83,11 @@ export default class PopulationDensityScatterPlot {
       .text("Number of Meteor Landings (log scale)");
 
     vis.svg
-      .append('text')
-      .attr('class', 'axis-label')
+      .append("text")
+      .attr("class", "axis-label")
       .attr(
         "transform",
-        `translate(22, ${vis.config.containerHeight / 2}) rotate(-90)`
+        `translate(24, ${vis.config.containerHeight / 2}) rotate(-90)`
       )
       .attr("text-anchor", "middle")
       .text("Population Density (log scale)");
@@ -127,6 +125,29 @@ export default class PopulationDensityScatterPlot {
       .sort((a, b) => a.landings - b.landings);
   }
 
+  buildYTicks(yMax) {
+    const baseTicks = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
+      .filter(d => d <= yMax);
+
+    if (yMax <= 5000) {
+      return baseTicks;
+    }
+
+    const extraTicks = [];
+    const upperTickCount = 3; // number of proportional ticks from 5k to max
+
+    const log5000 = Math.log10(5000);
+    const logMax = Math.log10(yMax);
+
+    for (let i = 1; i <= upperTickCount; i++) {
+      const t = i / upperTickCount;
+      const value = Math.pow(10, log5000 + (logMax - log5000) * t);
+      extraTicks.push(Math.round(value));
+    }
+
+    return [...new Set([...baseTicks, ...extraTicks])].sort((a, b) => a - b);
+  }
+
   updateVis() {
     const vis = this;
     vis.wrangleData();
@@ -151,11 +172,8 @@ export default class PopulationDensityScatterPlot {
     vis.xTicks = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
       .filter(d => d >= 1 && d <= xMax);
 
-    vis.yGridTicks = [1, 2, 5, 10, 20, 50, 100, 200, 500]
-      .filter(d => d >= 1 && d <= yMax);
-
-    vis.yAxisTicks = [1, 5, 20, 100, 500]
-      .filter(d => d >= 1 && d <= yMax);
+    vis.yGridTicks = vis.buildYTicks(yMax);
+    vis.yAxisTicks = vis.buildYTicks(yMax);
 
     vis.renderVis();
   }
@@ -191,6 +209,13 @@ export default class PopulationDensityScatterPlot {
 
     vis.chart.selectAll(".grid .domain").remove();
 
+    vis.yAxisGroup
+      .selectAll(".tick text")
+      .attr("font-size", "10px")
+      .attr("x", -10)
+      .attr("dy", "0.32em")
+      .style("text-anchor", "end");
+
     const points = vis.plotArea
       .selectAll(".scatter-point")
       .data(vis.chartData, d => d.country)
@@ -210,3 +235,5 @@ export default class PopulationDensityScatterPlot {
       );
   }
 }
+
+export default PopulationDensityScatterPlot;

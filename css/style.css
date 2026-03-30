@@ -324,6 +324,7 @@ body {
 #population-density-scatter {
   background: #fff;
   justify-content: center;
+  min-height: 460px;
 }
 
 #population-density-scatter svg {
