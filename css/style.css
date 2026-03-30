@@ -369,7 +369,6 @@ body {
   fill: #666;
 }
 
-<<<<<<< HEAD
 /* Vis 1 - Boxplot */
 
 #mass-by-class-boxplot .chart-title {
@@ -404,7 +403,8 @@ body {
   fill-opacity: 0.3;
   stroke: none;
   r: 1.5;
-=======
+}
+
 /* Vis 4 - bar charts */
 
 .stack-layer rect {
@@ -433,5 +433,4 @@ body {
   stroke-width: 2.5;
   fill: none;
   pointer-events: none;
->>>>>>> main
 }
