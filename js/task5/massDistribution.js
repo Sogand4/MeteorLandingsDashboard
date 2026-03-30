@@ -17,14 +17,14 @@ export default class MassDistributionMap {
       containerWidth: _config.containerWidth || 600,
       containerHeight: _config.containerHeight || 400,
       margin: {
-        top: 20, right: 20, bottom: 20, left: 20,
+        top: 30, right: 20, bottom: 2, left: 20,
       },
       topN: 7, // top 7 classes get distinct hue; rest will be under "Other"
     };
     this.data = data;
     this.countries = null;
     this.selectedCountry = null;
-    this.highlightedClass = null;
+    this.highlightedClasses = new Set();
     this.svg = null;
     this.projection = null;
     this.path = null;
@@ -59,6 +59,21 @@ export default class MassDistributionMap {
       .fitSize([vis.width, vis.height], { type: 'Sphere' });
     vis.path = d3.geoPath().projection(vis.projection);
 
+    vis.zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => {
+        vis.baseGroup.attr('transform', event.transform);
+        vis.pointsGroup.attr('transform', event.transform);
+      });
+
+    vis.svgRoot.call(vis.zoom);
+
+    vis.svgRoot.on('click', () => {
+      vis.highlightedClasses.clear();
+      vis.renderPoints();
+      vis.renderLegend();
+    });
+
     // Tooltip
     vis.tooltip = d3
       .select('body')
@@ -73,14 +88,30 @@ export default class MassDistributionMap {
     vis.pointsGroup = vis.svg.append('g').attr('class', 't5-points');
     vis.legendGroup = vis.svg.append('g').attr('class', 't5-legend');
 
-    vis.svg.append('text')
-      .attr('x', vis.width / 2)
+    vis.svgRoot.append('text')
+      .attr('x', vis.config.containerWidth / 2)
       .attr('y', vis.config.margin.top / 2)
       .attr('text-anchor', 'middle')
       .attr('font-size', 20)
       .attr('font-weight', 'bold')
       .attr('fill', '#333')
       .text('Geographic Distribution of Meteorite Mass and Classification');
+
+    vis.svgRoot.append('text')
+      .attr('class', 'zoom-reset')
+      .attr('x', vis.config.containerWidth - 10)
+      .attr('y', 16)
+      .attr('text-anchor', 'end')
+      .attr('font-size', 11)
+      .attr('fill', '#555')
+      .style('cursor', 'pointer')
+      .text('Reset zoom')
+      .on('click', (event) => {
+        event.stopPropagation();
+        vis.svgRoot.transition().duration(300).call(
+          vis.zoom.transform, d3.zoomIdentity,
+        );
+      });
   }
 
   async loadWorldMap() {
@@ -191,15 +222,12 @@ export default class MassDistributionMap {
       .attr('cy', (d) => d.py)
       .attr('r', (d) => vis.radiusScale(Math.log10(d.mass)))
       .attr('fill', (d) => vis.classColorScale(d.displayClass))
-      .attr('fill-opacity', (d) => (vis.highlightedClass === null || d.displayClass === vis.highlightedClass
-        ? 0.7
-        : 0.1))
-      .attr('stroke', (d) => (vis.highlightedClass !== null && d.displayClass === vis.highlightedClass
-        ? '#333'
-        : 'white'))
-      .attr('stroke-width', (d) => (vis.highlightedClass !== null && d.displayClass === vis.highlightedClass ? 1 : 0.3))
+      .attr('fill-opacity', (d) => (vis.highlightedClasses.size === 0 || vis.highlightedClasses.has(d.displayClass) ? 0.7 : 0.07))
+      .attr('stroke', (d) => (vis.highlightedClasses.has(d.displayClass) ? '#333' : 'white'))
+      .attr('stroke-width', (d) => (vis.highlightedClasses.has(d.displayClass) ? 1 : 0.3))
       .style('cursor', 'pointer')
       .on('mouseover', (event, d) => {
+        if (vis.highlightedClasses.size > 0 && !vis.highlightedClasses.has(d.displayClass)) return;
         vis.tooltip
           .style('visibility', 'visible')
           .html(
@@ -220,7 +248,12 @@ export default class MassDistributionMap {
         vis.tooltip.style('visibility', 'hidden');
       })
       .on('click', (event, d) => {
-        vis.highlightedClass = vis.highlightedClass === d.displayClass ? null : d.displayClass;
+        event.stopPropagation();
+        if (vis.highlightedClasses.has(d.displayClass)) {
+          vis.highlightedClasses.delete(d.displayClass);
+        } else {
+          vis.highlightedClasses.add(d.displayClass);
+        }
         vis.renderPoints();
         vis.renderLegend();
       });
@@ -253,13 +286,17 @@ export default class MassDistributionMap {
       .attr('fill', '#666')
       .text('(click to highlight)');
 
-    // Class swatches
     classEntries.forEach((cls, i) => {
       const row = g.append('g')
         .attr('transform', `translate(0,${18 + i * rowH})`)
         .style('cursor', 'pointer')
-        .on('click', () => {
-          vis.highlightedClass = vis.highlightedClass === cls ? null : cls;
+        .on('click', (event) => {
+          event.stopPropagation();
+          if (vis.highlightedClasses.has(cls)) {
+            vis.highlightedClasses.delete(cls);
+          } else {
+            vis.highlightedClasses.add(cls);
+          }
           vis.renderPoints();
           vis.renderLegend();
         });
@@ -267,17 +304,14 @@ export default class MassDistributionMap {
       row.append('circle')
         .attr('cx', r).attr('cy', r / 2).attr('r', r)
         .attr('fill', vis.classColorScale(cls))
-        .attr(
-          'fill-opacity',
-          vis.highlightedClass === null || vis.highlightedClass === cls ? 0.85 : 0.25,
-        )
-        .attr('stroke', vis.highlightedClass === cls ? '#333' : 'none')
+        .attr('fill-opacity', vis.highlightedClasses.size === 0 || vis.highlightedClasses.has(cls) ? 0.85 : 0.25)
+        .attr('stroke', vis.highlightedClasses.has(cls) ? '#333' : 'none')
         .attr('stroke-width', 1.5);
 
       row.append('text')
         .attr('x', r * 2 + 4).attr('y', r / 2 + 4)
         .attr('font-size', 10)
-        .attr('fill', vis.highlightedClass === null || vis.highlightedClass === cls ? '#333' : '#aaa')
+        .attr('fill', vis.highlightedClasses.size === 0 || vis.highlightedClasses.has(cls) ? '#333' : '#aaa')
         .text(cls);
     });
 
@@ -296,8 +330,7 @@ export default class MassDistributionMap {
       .text('(log scale)');
 
     const sizeExamples = [1, 1000, 1e6, 60e6];
-    const sxStart = 0;
-    let sxOffset = sxStart;
+    let sxOffset = 0;
     sizeExamples.forEach((mass) => {
       const rr = vis.radiusScale(Math.log10(mass));
       sxOffset += rr + 4;

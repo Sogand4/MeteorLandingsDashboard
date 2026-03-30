@@ -1,6 +1,11 @@
 /**
- * Task 3 – Country Landings Bar Chart (linked view)
- * Top N countries + Others. Bidirectionally linked with hexbin map.
+ * Task 3 – Country Bar Chart (linked view)
+ * Horizontal bars showing top N countries + "Others" aggregate.
+ * Three metric modes: Count, Avg Mass, Fell/Found ratio.
+ *
+ * When a country outside the top N is selected (via map, search, or any
+ * linked view), it replaces the "Others" bar so the user can compare it
+ * directly against the top countries on the same scale.
  *
  * References:
  * - UBC InfoVis 447 Tutorial 2 (Making a chart): scales, axes
@@ -9,122 +14,298 @@
  */
 import mapUtils from '../utils/mapUtils.js';
 
+const METRICS = {
+  count: {
+    label: 'Landings',
+    accessor: (rows) => rows.length,
+    format: d3.format(','),
+  },
+  avgMass: {
+    label: 'Avg Mass (g)',
+    accessor: (rows) => {
+      const masses = rows.map((d) => d.mass).filter((m) => m != null && m > 0);
+      return masses.length > 0 ? d3.mean(masses) : 0;
+    },
+    format: (v) => d3.format('.3s')(v) + 'g',
+  },
+  fellRatio: {
+    label: '% Fell (observed)',
+    accessor: (rows) => {
+      if (rows.length === 0) return 0;
+      const fell = rows.filter((d) => d.fall === 'Fell').length;
+      return (fell / rows.length) * 100;
+    },
+    format: (v) => d3.format('.1f')(v) + '%',
+  },
+};
+
+const BAR_HEIGHT = 16;
+const BAR_PAD = 0.15;
+
 export default class Task3CountryLandingsBarChart {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 280,
       containerHeight: _config.containerHeight || 200,
-      margin: {
-        top: 20, right: 10, bottom: 60, left: 45,
-      },
-      topN: _config.topN ?? 12,
+      margin: { top: 6, right: 40, bottom: 14, left: 100 },
+      topN: _config.topN ?? 10,
       onCountrySelect: _config.onCountrySelect ?? (() => {}),
     };
     this.data = data;
     this.selectedCountry = null;
+    this.metric = 'count';
+    this._countryMap = new Map();
   }
 
   initVis() {
     const vis = this;
     vis.width = vis.config.containerWidth
-      - vis.config.margin.left
-      - vis.config.margin.right;
-    vis.height = vis.config.containerHeight
-      - vis.config.margin.top
-      - vis.config.margin.bottom;
+      - vis.config.margin.left - vis.config.margin.right;
 
-    vis.svg = d3
-      .select(vis.config.parentElement)
-      .append('svg')
-      .attr('width', vis.config.containerWidth)
-      .attr('height', vis.config.containerHeight)
+    const root = d3.select(vis.config.parentElement);
+
+    vis.headerDiv = root.append('div').attr('class', 'bar-chart-header');
+
+    vis.metricToggle = vis.headerDiv.append('div').attr('class', 'bar-metric-toggle');
+
+    Object.entries(METRICS).forEach(([key, m]) => {
+      const btn = vis.metricToggle
+        .append('button')
+        .attr('class', `metric-btn${key === vis.metric ? ' active' : ''}`)
+        .attr('data-metric', key)
+        .text(m.label)
+        .on('click', () => {
+          vis.metric = key;
+          vis.metricToggle.selectAll('.metric-btn').classed('active', false);
+          btn.classed('active', true);
+          vis.updateVis();
+          vis.renderVis();
+        });
+    });
+
+    vis.subtitleText = vis.headerDiv
+      .append('div')
+      .attr('class', 'bar-chart-subtitle-text');
+
+    vis.svgContainer = root.append('svg').attr('width', vis.config.containerWidth);
+
+    vis.svg = vis.svgContainer
       .append('g')
-      .attr(
-        'transform',
-        `translate(${vis.config.margin.left},${vis.config.margin.top})`,
-      );
+      .attr('transform', `translate(${vis.config.margin.left},${vis.config.margin.top})`);
+
+    vis.tooltip = d3.select('body')
+      .append('div')
+      .attr('class', 'bar-chart-tooltip')
+      .style('position', 'absolute')
+      .style('visibility', 'hidden')
+      .style('pointer-events', 'none');
   }
 
   wrangleData() {
     const vis = this;
     const valid = vis.data.filter(mapUtils.hasCountry);
-    const counts = d3.rollup(valid, (v) => v.length, (d) => d.country);
-    const sorted = [...counts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .map(([country, count]) => ({ country, count }));
+    const grouped = d3.group(valid, (d) => d.country);
+    const metricDef = METRICS[vis.metric];
 
-    const top = sorted.slice(0, vis.config.topN);
-    const rest = sorted.slice(vis.config.topN);
-    const othersCount = rest.reduce((s, d) => s + d.count, 0);
-    if (othersCount > 0) {
-      top.push({ country: 'Others', count: othersCount, isOthers: true });
+    const all = [...grouped.entries()].map(([country, rows]) => ({
+      country,
+      value: metricDef.accessor(rows),
+      count: rows.length,
+      rows,
+    }));
+    all.sort((a, b) => b.count - a.count);
+
+    vis._countryMap = new Map(all.map((d) => [d.country, d]));
+
+    const topSet = new Set(all.slice(0, vis.config.topN).map((d) => d.country));
+    const top = all.filter((d) => topSet.has(d.country));
+    if (vis.metric !== 'count') {
+      top.sort((a, b) => b.value - a.value);
     }
+
+    const selectedOutsideTop = vis.selectedCountry
+      && !topSet.has(vis.selectedCountry)
+      && vis._countryMap.has(vis.selectedCountry);
+
+    const rest = all.filter((d) => !topSet.has(d.country));
+
+    if (selectedOutsideTop) {
+      const entry = vis._countryMap.get(vis.selectedCountry);
+      const rank = vis._getRank(vis.selectedCountry);
+      top.push({
+        ...entry,
+        isSwapped: true,
+        rank,
+        _othersCount: rest.length,
+      });
+    } else if (rest.length > 0) {
+      const restRows = rest.flatMap((d) => d.rows);
+      top.push({
+        country: `Others (${rest.length})`,
+        value: metricDef.accessor(restRows),
+        count: restRows.length,
+        isOthers: true,
+        _restEntries: rest,
+      });
+    }
+
     vis.barData = top;
   }
 
   updateVis() {
     const vis = this;
     vis.wrangleData();
-    vis.xScale = d3
-      .scaleBand()
-      .domain(vis.barData.map((d) => d.country))
-      .range([0, vis.width])
-      .padding(0.2);
-    vis.yScale = d3
-      .scaleLinear()
-      .domain([0, d3.max(vis.barData, (d) => d.count) || 1])
+
+    const numBars = vis.barData.length;
+    const bandStep = BAR_HEIGHT / (1 - BAR_PAD);
+    vis.height = Math.max(80, numBars * bandStep);
+
+    vis.svgContainer.attr(
+      'height',
+      vis.height + vis.config.margin.top + vis.config.margin.bottom,
+    );
+
+    vis.xScale = d3.scaleLinear()
+      .domain([0, d3.max(vis.barData, (d) => d.value) || 1])
       .nice()
-      .range([vis.height, 0]);
+      .range([0, vis.width]);
+
+    vis.yScale = d3.scaleBand()
+      .domain(vis.barData.map((d) => d.country))
+      .range([0, vis.height])
+      .padding(BAR_PAD);
+
+    const metricDef = METRICS[vis.metric];
+    const swapped = vis.barData.find((d) => d.isSwapped);
+    const sub = swapped
+      ? `Top ${vis.config.topN} · ${metricDef.label}  ·  #${swapped.rank} ${vis.selectedCountry}`
+      : `Top ${vis.config.topN} by landings · ${metricDef.label}`;
+    vis.subtitleText.text(sub);
+  }
+
+  _buildOthersTooltip(d) {
+    const vis = this;
+    const metricDef = METRICS[vis.metric];
+    const entries = d._restEntries || [];
+    const preview = [...entries].sort((a, b) => b.value - a.value).slice(0, 8);
+    let html = `<strong>${d.country}</strong><br/>`;
+    html += `Total landings: ${d3.format(',')(d.count)}<br/>`;
+    if (vis.metric !== 'count') {
+      html += `${metricDef.label}: ${metricDef.format(d.value)}<br/>`;
+    }
+    html += '<br/><em>Top in group:</em><br/>';
+    preview.forEach((e) => {
+      html += `&nbsp;&nbsp;${e.country}: ${metricDef.format(e.value)}<br/>`;
+    });
+    if (entries.length > 8) {
+      html += `&nbsp;&nbsp;<em>… ${entries.length - 8} more</em><br/>`;
+    }
+    html += '<br/><span style="color:#aaa">Select via search or map click</span>';
+    return html;
+  }
+
+  _barFill(d) {
+    const vis = this;
+    if (d.country === vis.selectedCountry || d.isSwapped) return '#e74c3c';
+    if (d.isOthers) return '#95a5a6';
+    if (vis.metric === 'fellRatio') return d3.interpolateRdYlBu(d.value / 100);
+    return '#3498db';
+  }
+
+  _barTooltipHtml(d) {
+    const vis = this;
+    const metricDef = METRICS[vis.metric];
+    if (d.isOthers) return vis._buildOthersTooltip(d);
+    let html = `<strong>${d.country}</strong>`;
+    if (d.isSwapped) {
+      html += ` <span style="color:#aaa">(#${d.rank} by count, from Others)</span>`;
+    }
+    html += `<br/>Landings: ${d3.format(',')(d.count)}<br/>`;
+    if (vis.metric !== 'count') {
+      html += `${metricDef.label}: ${metricDef.format(d.value)}`;
+    }
+    return html;
+  }
+
+  _getRank(country) {
+    const vis = this;
+    let rank = 0;
+    for (const e of vis._countryMap.values()) {
+      rank++;
+      if (e.country === country) return rank;
+    }
+    return null;
   }
 
   renderVis() {
     const vis = this;
+    const metricDef = METRICS[vis.metric];
     vis.svg.selectAll('.axis').remove();
     vis.svg.selectAll('.bars').remove();
 
-    vis.svg
-      .append('g')
+    const yAxis = vis.svg.append('g')
+      .attr('class', 'axis axis-y')
+      .call(d3.axisLeft(vis.yScale).tickSizeOuter(0));
+
+    yAxis.selectAll('text')
+      .attr('font-size', 10)
+      .attr('fill', (t) => {
+        const entry = vis.barData.find((d) => d.country === t);
+        return entry?.isSwapped ? '#e74c3c' : '#444';
+      })
+      .attr('font-weight', (t) => {
+        const entry = vis.barData.find((d) => d.country === t);
+        return entry?.isSwapped ? 600 : 400;
+      });
+
+    vis.svg.append('g')
       .attr('class', 'axis axis-x')
       .attr('transform', `translate(0,${vis.height})`)
-      .call(
-        d3
-          .axisBottom(vis.xScale)
-          .tickSizeOuter(0)
-          .tickValues(vis.barData.map((d) => d.country)),
-      )
-      .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .attr('text-anchor', 'end')
-      .attr('dx', '-0.5em')
-      .attr('dy', '0.5em');
+      .call(d3.axisBottom(vis.xScale).ticks(4).tickFormat(metricDef.format));
 
-    vis.svg.append('g').attr('class', 'axis axis-y').call(d3.axisLeft(vis.yScale));
-
-    const bars = vis.svg
-      .append('g')
-      .attr('class', 'bars')
+    vis.svg.append('g').attr('class', 'bars')
       .selectAll('.bar')
       .data(vis.barData)
       .join('rect')
-      .attr('class', 'bar')
-      .attr('x', (d) => vis.xScale(d.country))
-      .attr('y', (d) => vis.yScale(d.count))
-      .attr('width', vis.xScale.bandwidth())
-      .attr('height', (d) => vis.height - vis.yScale(d.count))
-      .attr('fill', (d) => (d.country === vis.selectedCountry ? '#e74c3c' : '#3498db'))
+      .attr('class', (d) => `bar${d.isOthers ? ' bar-others' : ''}`)
+      .attr('x', 0)
+      .attr('y', (d) => vis.yScale(d.country))
+      .attr('width', (d) => Math.max(0, vis.xScale(d.value)))
+      .attr('height', vis.yScale.bandwidth())
+      .attr('fill', (d) => vis._barFill(d))
       .attr('opacity', (d) => (d.isOthers && vis.selectedCountry ? 0.5 : 1))
+      .attr('stroke', (d) => (d.isOthers ? '#7f8c8d' : 'none'))
+      .attr('stroke-width', (d) => (d.isOthers ? 1 : 0))
+      .attr('stroke-dasharray', (d) => (d.isOthers ? '4 2' : 'none'))
       .style('cursor', (d) => (d.isOthers ? 'default' : 'pointer'))
       .on('click', (event, d) => {
         if (d.isOthers) return;
-        vis.config.onCountrySelect(d.country);
-      });
-
-    bars.append('title').text((d) => (d.isOthers ? `Others: ${d.count} meteorites` : `${d.country}: ${d.count} meteorites`));
+        const next = d.country === vis.selectedCountry ? null : d.country;
+        vis.config.onCountrySelect(next);
+      })
+      .on('mouseover', (event, d) => {
+        vis.tooltip.style('visibility', 'visible').html(vis._barTooltipHtml(d));
+      })
+      .on('mousemove', (event) => {
+        vis.tooltip
+          .style('left', `${event.pageX + 10}px`)
+          .style('top', `${event.pageY + 10}px`);
+      })
+      .on('mouseout', () => vis.tooltip.style('visibility', 'hidden'));
   }
 
   setSelectedCountry(country) {
-    this.selectedCountry = country;
+    this.selectedCountry = country || null;
+    this.updateVis();
+    this.renderVis();
+  }
+
+  setMetric(metric) {
+    if (!METRICS[metric]) return;
+    this.metric = metric;
+    this.metricToggle?.selectAll('.metric-btn').classed('active', false);
+    this.metricToggle?.select(`[data-metric="${metric}"]`).classed('active', true);
     this.updateVis();
     this.renderVis();
   }

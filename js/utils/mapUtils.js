@@ -22,14 +22,15 @@ const mapUtils = {
     return lon;
   },
 
-  /** Filter rows with valid reclat/reclong for mapping. */
+  /** Filter rows with valid reclat/reclong for mapping. Excludes Null Island (0,0). */
   hasValidCoords(d) {
-    return (
-      d.reclat != null
-      && !Number.isNaN(d.reclat)
-      && d.reclong != null
-      && !Number.isNaN(d.reclong)
-    );
+    const lat = d.reclat;
+    const lon = d.reclong;
+    if (lat == null || lon == null || Number.isNaN(lat) || Number.isNaN(lon)) {
+      return false;
+    }
+    if (lat === 0 && lon === 0) return false;
+    return true;
   },
 
   /** Filter rows with non-empty country. */
