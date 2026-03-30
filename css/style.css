@@ -175,7 +175,7 @@ body {
 /* Bottom row: scatterplot + temporal charts (33/33/33) */
 .bottom-charts {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 1;
   background: #fff;
   border-top: 1px solid #ddd;
@@ -214,6 +214,15 @@ body {
 
 #task3-country-bar svg {
   overflow: visible;
+}
+
+.chart-group {
+  display: flex;
+  flex-direction: row;
+}
+
+.chart-group .chart-container:first-child {
+  border-right: none;
 }
 
 /* Responsive: stack on narrow viewports */
@@ -286,4 +295,34 @@ body {
 .chart-note {
   font-size: 11px;
   fill: #666;
+}
+
+/* Vis 4 - bar charts */
+
+.stack-layer rect {
+  transition: opacity 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+}
+
+.stack-layer rect.is-dimmed {
+  opacity: 0.25;
+}
+
+.stack-layer rect.is-highlighted {
+  opacity: 1;
+}
+
+#total-meteorite-discoveries-bar-chart-svg .bar {
+  fill: #828282;
+  transition: opacity 150ms ease;
+}
+
+#total-meteorite-discoveries-bar-chart-svg .bar.is-dimmed {
+  opacity: 0.25;
+}
+
+.type-trend-line {
+  stroke: #2f5597;
+  stroke-width: 2.5;
+  fill: none;
+  pointer-events: none;
 }
