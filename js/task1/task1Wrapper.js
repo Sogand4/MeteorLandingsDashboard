@@ -2,6 +2,8 @@
  * Task 1 – Orchestrator
  * Creates the boxplot and sizes it to its container.
  */
+import MassByClassBoxPlot from './massByClassBoxplot.js';
+
 const Task1 = {
   massByClassBoxPlot: null,
 
@@ -24,7 +26,7 @@ const Task1 = {
 
     Task1.massByClassBoxPlot = new MassByClassBoxPlot(
       {
-        parentElement: "#mass-by-class-boxplot",
+        parentElement: '#mass-by-class-boxplot',
         containerWidth: plotSize.width,
         containerHeight: plotSize.height,
       },
@@ -34,3 +36,5 @@ const Task1 = {
     return Task1;
   },
 };
+
+export default Task1;

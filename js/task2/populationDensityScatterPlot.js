@@ -1,4 +1,4 @@
-class PopulationDensityScatterPlot {
+export default class PopulationDensityScatterPlot {
   constructor(_config, data) {
     this.config = {
       parentElement: _config.parentElement,
@@ -38,10 +38,12 @@ class PopulationDensityScatterPlot {
       .attr("height", vis.height);
 
     vis.chart = vis.svg
-      .append("g")
+      .append('g')
       .attr(
         "transform",
         `translate(${vis.config.margin.left},${vis.config.margin.top})`
+        'transform',
+        `translate(${vis.config.margin.left},${vis.config.margin.top})`,
       );
 
     vis.plotArea = vis.chart
@@ -57,9 +59,9 @@ class PopulationDensityScatterPlot {
       .text("Meteorite Landings vs. Population Density");
 
     vis.xAxisGroup = vis.chart
-      .append("g")
-      .attr("class", "axis axis-x")
-      .attr("transform", `translate(0, ${vis.height})`);
+      .append('g')
+      .attr('class', 'axis axis-x')
+      .attr('transform', `translate(0, ${vis.height})`);
 
     vis.yAxisGroup = vis.chart
       .append("g")
@@ -83,8 +85,8 @@ class PopulationDensityScatterPlot {
       .text("Number of Meteor Landings (log scale)");
 
     vis.svg
-      .append("text")
-      .attr("class", "axis-label")
+      .append('text')
+      .attr('class', 'axis-label')
       .attr(
         "transform",
         `translate(22, ${vis.config.containerHeight / 2}) rotate(-90)`

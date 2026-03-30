@@ -8,7 +8,7 @@ The dashboard will use a single main map with two modes instead of three separat
 
 | Mode | Task(s) | Encoding |
 |------|---------|----------|
-| **Density** | Task 3 (spatial hotspots) | Hexbin heatmap: color = count per spatial bin |
+| **Density** | Task 3 (spatial hotspots) | Hexbin heatmap: color = log-scaled count per spatial bin |
 | **Points** | Task 5 (mass/class by region) | Points: size = mass (log scale), color = top classes |
 
 A small toggle control switches between modes.
@@ -69,6 +69,11 @@ Filters are placed in a single row to minimize vertical space:
 ```
 Class: [Dropdown]  Year: [Range inputs]  Country: [Searchable dropdown]  Map: [Density ○ Points]
 ```
+
+### Data (Task 3+)
+
+- Primary CSV: `data/meteorite_clean_no_zero_coords.csv` (no Null Island `(0,0)`; coordinates used for maps).
+- Hexbin density uses a **log₁p color scale** so hotspots do not flatten the rest of the gradient.
 
 ### 6. Implementation Order
 

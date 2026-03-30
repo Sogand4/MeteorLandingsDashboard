@@ -175,7 +175,7 @@ body {
 /* Bottom row: scatterplot + temporal charts (33/33/33) */
 .bottom-charts {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 1;
   background: #fff;
   border-top: 1px solid #ddd;
@@ -209,11 +209,92 @@ body {
 }
 
 #task3-country-bar {
-  overflow: visible;
+  overflow: hidden;
 }
 
 #task3-country-bar svg {
   overflow: visible;
+  display: block;
+}
+
+/* Bar chart header (toggle + subtitle row) */
+.bar-chart-header {
+  flex-shrink: 0;
+}
+
+.bar-metric-toggle {
+  display: flex;
+  gap: 0;
+  margin: 0 0 2px 0;
+}
+
+.bar-metric-toggle .metric-btn {
+  flex: 1;
+  padding: 3px 6px;
+  font-size: 10px;
+  border: 1px solid #bbb;
+  background: #f5f5f5;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bar-metric-toggle .metric-btn:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.bar-metric-toggle .metric-btn:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.bar-metric-toggle .metric-btn + .metric-btn {
+  border-left: none;
+}
+
+.bar-metric-toggle .metric-btn.active {
+  background: #3498db;
+  color: #fff;
+  border-color: #2980b9;
+}
+
+.bar-chart-subtitle-text {
+  font-size: 10px;
+  color: #666;
+  padding: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Bar chart tooltip */
+.bar-chart-tooltip {
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.88);
+  color: #fff;
+  font-size: 12px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-width: 280px;
+  line-height: 1.45;
+}
+
+.bar-chart-tooltip em {
+  color: #ccc;
+}
+
+/* Others bar hover highlight */
+.bar-others:hover {
+  filter: brightness(1.15);
+}
+
+.chart-group {
+  display: flex;
+  flex-direction: row;
+}
+
+.chart-group .chart-container:first-child {
+  border-right: none;
 }
 
 /* Responsive: stack on narrow viewports */
@@ -286,4 +367,70 @@ body {
 .chart-note {
   font-size: 11px;
   fill: #666;
+}
+
+/* Vis 1 - Boxplot */
+
+#mass-by-class-boxplot .chart-title {
+  text-align: center;
+}
+
+#mass-by-class-boxplot .chart-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#mass-by-class-boxplot .box {
+  fill-opacity: 0.45;
+  stroke: #444;
+}
+
+#mass-by-class-boxplot .range-line,
+#mass-by-class-boxplot .range-cap-top,
+#mass-by-class-boxplot .range-cap-bottom {
+  stroke: #444;
+}
+
+#mass-by-class-boxplot .median-line {
+  stroke: #444;
+  stroke-width: 1.5;
+}
+
+#mass-by-class-boxplot .outlier {
+  fill-opacity: 0.3;
+  stroke: none;
+  r: 1.5;
+}
+
+/* Vis 4 - bar charts */
+
+.stack-layer rect {
+  transition: opacity 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+}
+
+.stack-layer rect.is-dimmed {
+  opacity: 0.25;
+}
+
+.stack-layer rect.is-highlighted {
+  opacity: 1;
+}
+
+#total-meteorite-discoveries-bar-chart-svg .bar {
+  fill: #828282;
+  transition: opacity 150ms ease;
+}
+
+#total-meteorite-discoveries-bar-chart-svg .bar.is-dimmed {
+  opacity: 0.25;
+}
+
+.type-trend-line {
+  stroke: #2f5597;
+  stroke-width: 2.5;
+  fill: none;
+  pointer-events: none;
 }

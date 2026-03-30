@@ -2,6 +2,8 @@
  * Task 2 – Orchestrator
  * Creates the scatterplot chart and sizes it to its container.
  */
+import PopulationDensityScatterPlot from './populationDensityScatterPlot.js';
+
 const Task2 = {
   populationDensityScatterPlot: null,
 
