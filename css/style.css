@@ -369,6 +369,42 @@ body {
   fill: #666;
 }
 
+/* Vis 1 - Boxplot */
+
+#mass-by-class-boxplot .chart-title {
+  text-align: center;
+}
+
+#mass-by-class-boxplot .chart-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#mass-by-class-boxplot .box {
+  fill-opacity: 0.45;
+  stroke: #444;
+}
+
+#mass-by-class-boxplot .range-line,
+#mass-by-class-boxplot .range-cap-top,
+#mass-by-class-boxplot .range-cap-bottom {
+  stroke: #444;
+}
+
+#mass-by-class-boxplot .median-line {
+  stroke: #444;
+  stroke-width: 1.5;
+}
+
+#mass-by-class-boxplot .outlier {
+  fill-opacity: 0.3;
+  stroke: none;
+  r: 1.5;
+}
+
 /* Vis 4 - bar charts */
 
 .stack-layer rect {
