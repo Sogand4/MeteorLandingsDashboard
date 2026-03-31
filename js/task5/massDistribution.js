@@ -140,6 +140,11 @@ export default class MassDistributionMap {
     }
   }
 
+  setYearRange(min, max) {
+    this.yearMin = min;
+    this.yearMax = max;
+  }
+
   wrangleData() {
     const vis = this;
 
@@ -149,6 +154,12 @@ export default class MassDistributionMap {
     }
     if (vis.selectedClass) {
       filtered = filtered.filter((d) => d.recclass === vis.selectedClass);
+    }
+    if (vis.yearMin != null) {
+      filtered = filtered.filter((d) => d.year != null && d.year >= vis.yearMin);
+    }
+    if (vis.yearMax != null) {
+      filtered = filtered.filter((d) => d.year != null && d.year <= vis.yearMax);
     }
 
     // Determine top N classes by count

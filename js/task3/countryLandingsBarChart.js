@@ -100,11 +100,22 @@ export default class Task3CountryLandingsBarChart {
       .style('pointer-events', 'none');
   }
 
+  setYearRange(min, max) {
+    this.yearMin = min;
+    this.yearMax = max;
+  }
+
   wrangleData() {
     const vis = this;
     let valid = vis.data.filter(mapUtils.hasCountry);
     if (vis.selectedClass) {
       valid = valid.filter((d) => d.recclass === vis.selectedClass);
+    }
+    if (vis.yearMin != null) {
+      valid = valid.filter((d) => d.year != null && d.year >= vis.yearMin);
+    }
+    if (vis.yearMax != null) {
+      valid = valid.filter((d) => d.year != null && d.year <= vis.yearMax);
     }
     const grouped = d3.group(valid, (d) => d.country);
     const metricDef = METRICS[vis.metric];

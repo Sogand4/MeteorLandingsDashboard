@@ -30,6 +30,12 @@ const MapWrapper = {
     if (MapWrapper.barChart) MapWrapper.barChart.setSelectedClass(cls);
   },
 
+  setYearRange(min, max) {
+    if (MapWrapper.densityMap) MapWrapper.densityMap.setYearRange(min, max);
+    if (MapWrapper.pointsMap) MapWrapper.pointsMap.setYearRange(min, max);
+    if (MapWrapper.barChart) MapWrapper.barChart.setYearRange(min, max);
+  },
+
   /**
    * Switch between density (Task 3) and points (Task 5) modes.
    * Both SVGs share the same #main-map container; only one is visible at a time.

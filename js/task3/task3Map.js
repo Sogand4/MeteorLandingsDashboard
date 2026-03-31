@@ -66,6 +66,11 @@ export default class Task3Map {
     this.countries = await mapUtils.loadWorldMap();
   }
 
+  setYearRange(min, max) {
+    this.yearMin = min;
+    this.yearMax = max;
+  }
+
   wrangleData() {
     const vis = this;
     let filtered = vis.data.filter(mapUtils.hasValidCoords);
@@ -75,6 +80,12 @@ export default class Task3Map {
     }
     if (vis.selectedClass) {
       filtered = filtered.filter((d) => d.recclass === vis.selectedClass);
+    }
+    if (vis.yearMin != null) {
+      filtered = filtered.filter((d) => d.year != null && d.year >= vis.yearMin);
+    }
+    if (vis.yearMax != null) {
+      filtered = filtered.filter((d) => d.year != null && d.year <= vis.yearMax);
     }
 
     vis.filteredData = filtered.map((d) => ({
