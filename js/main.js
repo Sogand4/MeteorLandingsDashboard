@@ -135,14 +135,9 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
   if (filterClass) {
     filterClass.addEventListener('change', () => {
       const recclass = filterClass.value || null;
-      if (MapWrapper.densityMap) {
-        MapWrapper.densityMap.setSelectedClass(recclass);
-        MapWrapper.densityMap.update(data);
-      }
-      if (MapWrapper.pointsMap && MapWrapper.pointsMap.setSelectedClass) {
-        MapWrapper.pointsMap.setSelectedClass(recclass);
-        MapWrapper.pointsMap.update(data);
-      }
+      MapWrapper.setSelectedClass(recclass);
+      MapWrapper.densityMap?.update(data);
+      MapWrapper.pointsMap?.update(data);
     });
   }
 

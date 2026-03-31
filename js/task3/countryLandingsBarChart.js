@@ -54,6 +54,7 @@ export default class Task3CountryLandingsBarChart {
     };
     this.data = data;
     this.selectedCountry = null;
+    this.selectedClass = null;
     this.metric = 'count';
     this._countryMap = new Map();
   }
@@ -104,7 +105,10 @@ export default class Task3CountryLandingsBarChart {
 
   wrangleData() {
     const vis = this;
-    const valid = vis.data.filter(mapUtils.hasCountry);
+    let valid = vis.data.filter(mapUtils.hasCountry);
+    if (vis.selectedClass) {
+      valid = valid.filter((d) => d.recclass === vis.selectedClass);
+    }
     const grouped = d3.group(valid, (d) => d.country);
     const metricDef = METRICS[vis.metric];
 
@@ -190,7 +194,8 @@ export default class Task3CountryLandingsBarChart {
     const entries = d._restEntries || [];
     const preview = [...entries].sort((a, b) => b.value - a.value).slice(0, 8);
     let html = `<strong>${d.country}</strong><br/>`;
-    html += `Total landings: ${d3.format(',')(d.count)}<br/>`;
+    html += '<span style="color:#aaa">Select via search or map click</span><br/>';
+    html += `Total landings: ${d3.format(',')(d.count)}`;
     if (vis.metric !== 'count') {
       html += `${metricDef.label}: ${metricDef.format(d.value)}<br/>`;
     }
@@ -201,7 +206,7 @@ export default class Task3CountryLandingsBarChart {
     if (entries.length > 8) {
       html += `&nbsp;&nbsp;<em>… ${entries.length - 8} more</em><br/>`;
     }
-    html += '<br/><span style="color:#aaa">Select via search or map click</span>';
+  
     return html;
   }
 
@@ -297,6 +302,12 @@ export default class Task3CountryLandingsBarChart {
 
   setSelectedCountry(country) {
     this.selectedCountry = country || null;
+    this.updateVis();
+    this.renderVis();
+  }
+
+  setSelectedClass(recclass) {
+    this.selectedClass = recclass || null;
     this.updateVis();
     this.renderVis();
   }
