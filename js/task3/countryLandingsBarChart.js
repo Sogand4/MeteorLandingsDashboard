@@ -2,11 +2,6 @@
  * Task 3 – Country Bar Chart (linked view)
  * Horizontal bars showing top N countries + "Others" aggregate.
  * Three metric modes: Count, Avg Mass, Fell/Found ratio.
- *
- * When a country outside the top N is selected (via map, search, or any
- * linked view), it replaces the "Others" bar so the user can compare it
- * directly against the top countries on the same scale.
- *
  * References:
  * - UBC InfoVis 447 Tutorial 2 (Making a chart): scales, axes
  * - UBC InfoVis 447 Tutorial 3 (Data joins): selectAll().data().join()
@@ -26,7 +21,7 @@ const METRICS = {
       const masses = rows.map((d) => d.mass).filter((m) => m != null && m > 0);
       return masses.length > 0 ? d3.mean(masses) : 0;
     },
-    format: (v) => d3.format('.3s')(v) + 'g',
+    format: (v) => `${d3.format('.3s')(v)}g`,
   },
   fellRatio: {
     label: '% Fell (observed)',
@@ -35,7 +30,7 @@ const METRICS = {
       const fell = rows.filter((d) => d.fall === 'Fell').length;
       return (fell / rows.length) * 100;
     },
-    format: (v) => d3.format('.1f')(v) + '%',
+    format: (v) => `${d3.format('.1f')(v)}%`,
   },
 };
 
@@ -48,7 +43,9 @@ export default class Task3CountryLandingsBarChart {
       parentElement: _config.parentElement,
       containerWidth: _config.containerWidth || 280,
       containerHeight: _config.containerHeight || 200,
-      margin: { top: 6, right: 40, bottom: 14, left: 100 },
+      margin: {
+        top: 6, right: 40, bottom: 14, left: 100,
+      },
       topN: _config.topN ?? 10,
       onCountrySelect: _config.onCountrySelect ?? (() => {}),
     };
@@ -56,7 +53,7 @@ export default class Task3CountryLandingsBarChart {
     this.selectedCountry = null;
     this.selectedClass = null;
     this.metric = 'count';
-    this._countryMap = new Map();
+    this.countryLookup = new Map();
   }
 
   initVis() {
@@ -120,7 +117,7 @@ export default class Task3CountryLandingsBarChart {
     }));
     all.sort((a, b) => b.count - a.count);
 
-    vis._countryMap = new Map(all.map((d) => [d.country, d]));
+    vis.countryLookup = new Map(all.map((d) => [d.country, d]));
 
     const topSet = new Set(all.slice(0, vis.config.topN).map((d) => d.country));
     const top = all.filter((d) => topSet.has(d.country));
@@ -130,18 +127,18 @@ export default class Task3CountryLandingsBarChart {
 
     const selectedOutsideTop = vis.selectedCountry
       && !topSet.has(vis.selectedCountry)
-      && vis._countryMap.has(vis.selectedCountry);
+      && vis.countryLookup.has(vis.selectedCountry);
 
     const rest = all.filter((d) => !topSet.has(d.country));
 
     if (selectedOutsideTop) {
-      const entry = vis._countryMap.get(vis.selectedCountry);
-      const rank = vis._getRank(vis.selectedCountry);
+      const entry = vis.countryLookup.get(vis.selectedCountry);
+      const rank = vis.getRank(vis.selectedCountry);
       top.push({
         ...entry,
         isSwapped: true,
         rank,
-        _othersCount: rest.length,
+        othersCount: rest.length,
       });
     } else if (rest.length > 0) {
       const restRows = rest.flatMap((d) => d.rows);
@@ -150,7 +147,7 @@ export default class Task3CountryLandingsBarChart {
         value: metricDef.accessor(restRows),
         count: restRows.length,
         isOthers: true,
-        _restEntries: rest,
+        restEntries: rest,
       });
     }
 
@@ -188,10 +185,10 @@ export default class Task3CountryLandingsBarChart {
     vis.subtitleText.text(sub);
   }
 
-  _buildOthersTooltip(d) {
+  buildOthersTooltip(d) {
     const vis = this;
     const metricDef = METRICS[vis.metric];
-    const entries = d._restEntries || [];
+    const entries = d.restEntries || [];
     const preview = [...entries].sort((a, b) => b.value - a.value).slice(0, 8);
     let html = `<strong>${d.country}</strong><br/>`;
     html += '<span style="color:#aaa">Select via search or map click</span><br/>';
@@ -206,11 +203,11 @@ export default class Task3CountryLandingsBarChart {
     if (entries.length > 8) {
       html += `&nbsp;&nbsp;<em>… ${entries.length - 8} more</em><br/>`;
     }
-  
+
     return html;
   }
 
-  _barFill(d) {
+  barFill(d) {
     const vis = this;
     if (d.country === vis.selectedCountry || d.isSwapped) return '#e74c3c';
     if (d.isOthers) return '#95a5a6';
@@ -218,10 +215,10 @@ export default class Task3CountryLandingsBarChart {
     return '#3498db';
   }
 
-  _barTooltipHtml(d) {
+  barTooltipHtml(d) {
     const vis = this;
     const metricDef = METRICS[vis.metric];
-    if (d.isOthers) return vis._buildOthersTooltip(d);
+    if (d.isOthers) return vis.buildOthersTooltip(d);
     let html = `<strong>${d.country}</strong>`;
     if (d.isSwapped) {
       html += ` <span style="color:#aaa">(#${d.rank} by count, from Others)</span>`;
@@ -233,14 +230,10 @@ export default class Task3CountryLandingsBarChart {
     return html;
   }
 
-  _getRank(country) {
-    const vis = this;
-    let rank = 0;
-    for (const e of vis._countryMap.values()) {
-      rank++;
-      if (e.country === country) return rank;
-    }
-    return null;
+  getRank(country) {
+    const entries = [...this.countryLookup.values()];
+    const idx = entries.findIndex((e) => e.country === country);
+    return idx >= 0 ? idx + 1 : null;
   }
 
   renderVis() {
@@ -278,7 +271,7 @@ export default class Task3CountryLandingsBarChart {
       .attr('y', (d) => vis.yScale(d.country))
       .attr('width', (d) => Math.max(0, vis.xScale(d.value)))
       .attr('height', vis.yScale.bandwidth())
-      .attr('fill', (d) => vis._barFill(d))
+      .attr('fill', (d) => vis.barFill(d))
       .attr('opacity', (d) => (d.isOthers && vis.selectedCountry ? 0.5 : 1))
       .attr('stroke', (d) => (d.isOthers ? '#7f8c8d' : 'none'))
       .attr('stroke-width', (d) => (d.isOthers ? 1 : 0))
@@ -290,7 +283,7 @@ export default class Task3CountryLandingsBarChart {
         vis.config.onCountrySelect(next);
       })
       .on('mouseover', (event, d) => {
-        vis.tooltip.style('visibility', 'visible').html(vis._barTooltipHtml(d));
+        vis.tooltip.style('visibility', 'visible').html(vis.barTooltipHtml(d));
       })
       .on('mousemove', (event) => {
         vis.tooltip

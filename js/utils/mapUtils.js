@@ -46,6 +46,7 @@ const mapUtils = {
       );
       return topojson.feature(world, world.objects.countries).features;
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.warn('Could not load world map:', e);
       return null;
     }

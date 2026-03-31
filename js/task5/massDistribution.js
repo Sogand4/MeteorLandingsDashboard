@@ -109,9 +109,7 @@ export default class MassDistributionMap {
       .text('Reset zoom')
       .on('click', (event) => {
         event.stopPropagation();
-        vis.svgRoot.transition().duration(300).call(
-          vis.zoom.transform, d3.zoomIdentity,
-        );
+        vis.svgRoot.transition().duration(300).call(vis.zoom.transform, d3.zoomIdentity);
       });
   }
 

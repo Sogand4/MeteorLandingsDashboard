@@ -1,6 +1,6 @@
 /**
  * Task 3 – Hexbin Density Map
- * Spatial hotspots: color = count per hexbin.
+ * Spatial hotspots: color = log-scaled count per spatial bin
  *
  * References:
  * - UBC InfoVis 447 Tutorial 6 (Geographic maps): d3.geoPath, projection
@@ -121,7 +121,7 @@ export default class Task3Map {
     const rawMax = d3.max(vis.bins, (b) => b.length);
     vis.minCount = Number.isFinite(rawMin) ? rawMin : 0;
     vis.maxCount = Number.isFinite(rawMax) ? Math.max(rawMax, vis.minCount, 1) : 1;
-    /** Log10(1+x) color scale reduces skew from extreme-density hotspots (feedback: log scaling). */
+    /* Log10(1+x) color scale reduces skew from hotspots */
     vis.logMin = Math.log10(1 + Math.max(0, vis.minCount));
     vis.logMax = Math.log10(1 + Math.max(vis.maxCount, 1));
     if (vis.logMax <= vis.logMin) vis.logMax = vis.logMin + 1e-9;
@@ -298,11 +298,10 @@ export default class Task3Map {
       const logA = steps === 0
         ? logLo
         : logLo + (i / steps) * (logHi - logLo);
-      const logB = steps === 0
-        ? logHi
-        : (i < steps
-          ? logLo + ((i + 1) / steps) * (logHi - logLo)
-          : logHi);
+      let logB = logHi;
+      if (steps > 0 && i < steps) {
+        logB = logLo + ((i + 1) / steps) * (logHi - logLo);
+      }
       const countLo = Math.max(0, Math.floor(10 ** logA - 1));
       const countHi = Math.max(countLo, Math.ceil(10 ** logB - 1));
       const label = `${fmt(countLo)}–${fmt(countHi)}`;
