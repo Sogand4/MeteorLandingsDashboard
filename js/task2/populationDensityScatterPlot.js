@@ -135,7 +135,7 @@ class PopulationDensityScatterPlot {
     return ticks;
   }
 
-  static TicksWithMax(baseTicks, maxValue) {
+  static buildTicksWithMax(baseTicks, maxValue) {
     const ticks = [...baseTicks];
 
     if (!ticks.includes(maxValue)) {
@@ -176,11 +176,11 @@ class PopulationDensityScatterPlot {
     const baseXTicks = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
       .filter((d) => d >= 1 && d <= vis.xMax);
 
-    const baseYTicks = vis.buildPowerOfTenTicks(vis.yMax);
+    const baseYTicks = PopulationDensityScatterPlot.buildPowerOfTenTicks(vis.yMax);
 
-    vis.xTicks = vis.buildTicksWithMax(baseXTicks, vis.xMax);
-    vis.yGridTicks = vis.buildTicksWithMax(baseYTicks, vis.yMax);
-    vis.yAxisTicks = vis.buildTicksWithMax(baseYTicks, vis.yMax);
+    vis.xTicks = PopulationDensityScatterPlot.buildTicksWithMax(baseXTicks, vis.xMax);
+    vis.yGridTicks = PopulationDensityScatterPlot.buildTicksWithMax(baseYTicks, vis.yMax);
+    vis.yAxisTicks = PopulationDensityScatterPlot.buildTicksWithMax(baseYTicks, vis.yMax);
 
     vis.renderVis();
   }
@@ -189,12 +189,12 @@ class PopulationDensityScatterPlot {
     const vis = this;
 
     const xTickFormat = (d) => {
-      if (d === vis.xMax) return vis.formatMaxTick(d);
+      if (d === vis.xMax) return PopulationDensityScatterPlot.formatMaxTick(d);
       return d3.format('~s')(d);
     };
 
     const yTickFormat = (d) => {
-      if (d === vis.yMax) return vis.formatMaxTick(d);
+      if (d === vis.yMax) return PopulationDensityScatterPlot.formatMaxTick(d);
       return d3.format('~s')(d);
     };
 
