@@ -1,3 +1,5 @@
+import { getTopRecclasses } from '../utils/recclassUtils.js';
+
 export default class TopMeteoriteDistributionBarChart {
   constructor(_config, data, dispatcher) {
     this.config = {
@@ -82,16 +84,7 @@ export default class TopMeteoriteDistributionBarChart {
   updateVis() {
     const vis = this;
 
-    const recclassCounts = d3.rollups(
-      vis.data,
-      (group) => group.length,
-      (d) => d.recclass,
-    );
-
-    vis.topRecclasses = recclassCounts
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-      .map((d) => d[0]);
+    vis.topRecclasses = getTopRecclasses(vis.data, 4);
 
     vis.stackKeys = [...vis.topRecclasses, 'Other'];
 

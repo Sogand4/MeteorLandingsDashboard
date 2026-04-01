@@ -3,6 +3,9 @@
  * - Boxplot in D3: https://d3-graph-gallery.com/graph/boxplot_basic.html
  * - Boxplot tutorial: https://observablehq.com/@d3/box-plot/2
 */
+
+import { getRankedRecclasses } from '../utils/recclassUtils.js';
+
 export default class MassByClassBoxPlot {
   constructor(_config, data) {
     this.config = {
@@ -39,14 +42,7 @@ export default class MassByClassBoxPlot {
       .attr('class', 'chart-title')
       .text('Mass Distribution for Top Meteorite Classes');
 
-    const classCounts = d3.rollups(
-      vis.data.filter((d) => d.recclass && +d.mass > 0),
-      (values) => values.length,
-      (d) => d.recclass,
-    )
-      .sort((a, b) => d3.descending(a[1], b[1]));
-
-    vis.rankOrderedClasses = classCounts.map((d) => d[0]);
+    vis.rankOrderedClasses = getRankedRecclasses(vis.data, (d) => d.recclass && +d.mass > 0);
 
     // Show the top 4 most frequent recclasses as fixed boxplots
     // The 5th slot is user-controlled via dropdown and defaults to the 5th most frequent class
