@@ -71,6 +71,20 @@
             <label for="map-mode-points">Points</label>
           </span>
         </label>
+        <button id="filter-clear-btn" class="filter-clear-btn" type="button">
+          Clear
+        </button>
+        <button id="filter-save-btn" class="filter-save-btn" type="button">
+          Save
+        </button>
+        <div class="filter-history-wrap">
+          <button id="filter-history-btn" class="filter-history-btn"
+            type="button" aria-expanded="false">
+            History ▾
+          </button>
+          <ul id="filter-history-list" class="filter-history-dropdown"
+            aria-hidden="true"></ul>
+        </div>
       </header>
 
       <!-- Main content: map + sidebar -->

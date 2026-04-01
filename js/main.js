@@ -109,6 +109,122 @@ function populateClassFilter(data) {
   });
 }
 
+const HISTORY_KEY = 'meteorite-filter-history';
+
+const FilterHistory = {
+  entries: [],
+
+  load() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      if (raw) FilterHistory.entries = JSON.parse(raw);
+    } catch { /* ignore corrupt data */ }
+  },
+
+  save() {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(FilterHistory.entries));
+    } catch { /* storage full or unavailable */ }
+  },
+
+  capture() {
+    const snap = {
+      recclass: document.getElementById('filter-class')?.value || '',
+      yearMin: document.getElementById('filter-year-min')?.value || '',
+      yearMax: document.getElementById('filter-year-max')?.value || '',
+      country: document.getElementById('filter-country-search')?.value || '',
+      mapMode: document.querySelector("input[name='map-mode']:checked")?.value || 'density',
+    };
+    const key = JSON.stringify(snap);
+    FilterHistory.entries = FilterHistory.entries.filter(
+      (e) => JSON.stringify(e) !== key,
+    );
+    FilterHistory.entries.unshift(snap);
+    FilterHistory.save();
+    FilterHistory.render();
+  },
+
+  label(snap) {
+    const parts = [];
+    if (snap.recclass) parts.push(snap.recclass);
+    if (snap.yearMin || snap.yearMax) {
+      parts.push(`${snap.yearMin || '…'}–${snap.yearMax || '…'}`);
+    }
+    if (snap.country) parts.push(snap.country);
+    parts.push(snap.mapMode === 'points' ? 'Points' : 'Density');
+    return parts.join(' · ') || 'All defaults';
+  },
+
+  render() {
+    const list = document.getElementById('filter-history-list');
+    if (!list) return;
+    list.innerHTML = '';
+    if (FilterHistory.entries.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'filter-history-empty';
+      li.textContent = 'No history yet';
+      list.appendChild(li);
+      return;
+    }
+    FilterHistory.entries.forEach((snap, i) => {
+      const li = document.createElement('li');
+
+      const label = document.createElement('span');
+      label.className = 'filter-history-label';
+      label.textContent = `${i + 1}. ${FilterHistory.label(snap)}`;
+      li.appendChild(label);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'filter-history-remove';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.title = 'Remove';
+      removeBtn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        FilterHistory.entries.splice(i, 1);
+        FilterHistory.save();
+        FilterHistory.render();
+      });
+      li.appendChild(removeBtn);
+
+      li.addEventListener('mousedown', (e) => {
+        if (e.target === removeBtn) return;
+        e.preventDefault();
+        FilterHistory.restore(snap);
+        list.setAttribute('aria-hidden', 'true');
+        const btn = document.getElementById('filter-history-btn');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+      });
+      list.appendChild(li);
+    });
+  },
+
+  restore: null,
+
+  init(restoreFn) {
+    FilterHistory.restore = restoreFn;
+    FilterHistory.load();
+    const btn = document.getElementById('filter-history-btn');
+    const list = document.getElementById('filter-history-list');
+    if (!btn || !list) return;
+
+    btn.addEventListener('click', () => {
+      const open = list.getAttribute('aria-hidden') !== 'true';
+      list.setAttribute('aria-hidden', open ? 'true' : 'false');
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!btn.contains(e.target) && !list.contains(e.target)) {
+        list.setAttribute('aria-hidden', 'true');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    FilterHistory.render();
+  },
+};
+
 d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
   const data = raw.map(parseMeteoriteRow);
 
@@ -135,16 +251,27 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
   if (filterClass) {
     filterClass.addEventListener('change', () => {
       const recclass = filterClass.value || null;
-      if (MapWrapper.densityMap) {
-        MapWrapper.densityMap.setSelectedClass(recclass);
-        MapWrapper.densityMap.update(data);
-      }
-      if (MapWrapper.pointsMap && MapWrapper.pointsMap.setSelectedClass) {
-        MapWrapper.pointsMap.setSelectedClass(recclass);
-        MapWrapper.pointsMap.update(data);
-      }
+      MapWrapper.setSelectedClass(recclass);
+      MapWrapper.densityMap?.update(data);
+      MapWrapper.pointsMap?.update(data);
     });
   }
+
+  const applyYearFilter = () => {
+    const minEl = document.getElementById('filter-year-min');
+    const maxEl = document.getElementById('filter-year-max');
+    const min = minEl && minEl.value !== '' ? +minEl.value : null;
+    const max = maxEl && maxEl.value !== '' ? +maxEl.value : null;
+    MapWrapper.setYearRange(min, max);
+    MapWrapper.densityMap?.update(data);
+    MapWrapper.pointsMap?.update(data);
+    MapWrapper.barChart?.update(data);
+  };
+
+  ['filter-year-min', 'filter-year-max'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', applyYearFilter);
+  });
 
   requestAnimationFrame(() => {
     MapWrapper.init({
@@ -152,6 +279,51 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
       barChartContainer: '#task3-country-bar',
       data,
       onCountrySelectExternal: syncFilterToSelection,
+    });
+
+    const clearBtn = document.getElementById('filter-clear-btn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (filterClass) filterClass.value = '';
+        const yearMin = document.getElementById('filter-year-min');
+        const yearMax = document.getElementById('filter-year-max');
+        if (yearMin) yearMin.value = '';
+        if (yearMax) yearMax.value = '';
+        if (countryFilterRef) countryFilterRef.setValue('');
+        document.getElementById('map-mode-density').checked = true;
+        MapWrapper.setMode('density');
+        MapWrapper.setSelectedClass(null);
+        MapWrapper.setYearRange(null, null);
+        applyCountryFilter(null);
+      });
+    }
+
+    const saveBtn = document.getElementById('filter-save-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => FilterHistory.capture());
+    }
+
+    FilterHistory.init((snap) => {
+      if (filterClass) filterClass.value = snap.recclass;
+      const yearMin = document.getElementById('filter-year-min');
+      const yearMax = document.getElementById('filter-year-max');
+      if (yearMin) yearMin.value = snap.yearMin;
+      if (yearMax) yearMax.value = snap.yearMax;
+      if (countryFilterRef) countryFilterRef.setValue(snap.country);
+
+      const modeRadio = document.querySelector(
+        `input[name='map-mode'][value='${snap.mapMode}']`,
+      );
+      if (modeRadio) {
+        modeRadio.checked = true;
+        MapWrapper.setMode(snap.mapMode);
+      }
+
+      const minVal = snap.yearMin !== '' ? +snap.yearMin : null;
+      const maxVal = snap.yearMax !== '' ? +snap.yearMax : null;
+      MapWrapper.setYearRange(minVal, maxVal);
+      MapWrapper.setSelectedClass(snap.recclass || null);
+      applyCountryFilter(snap.country || null);
     });
 
     Task4.init({

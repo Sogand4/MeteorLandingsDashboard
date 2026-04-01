@@ -19,11 +19,12 @@ export default class MassDistributionMap {
       margin: {
         top: 30, right: 20, bottom: 2, left: 20,
       },
-      topN: 7, // top 7 classes get distinct hue; rest will be under "Other"
+      topN: 7,
     };
     this.data = data;
     this.countries = null;
     this.selectedCountry = null;
+    this.selectedClass = null;
     this.highlightedClasses = new Set();
     this.svg = null;
     this.projection = null;
@@ -108,9 +109,7 @@ export default class MassDistributionMap {
       .text('Reset zoom')
       .on('click', (event) => {
         event.stopPropagation();
-        vis.svgRoot.transition().duration(300).call(
-          vis.zoom.transform, d3.zoomIdentity,
-        );
+        vis.svgRoot.transition().duration(300).call(vis.zoom.transform, d3.zoomIdentity);
       });
   }
 
@@ -141,12 +140,26 @@ export default class MassDistributionMap {
     }
   }
 
+  setYearRange(min, max) {
+    this.yearMin = min;
+    this.yearMax = max;
+  }
+
   wrangleData() {
     const vis = this;
 
     let filtered = vis.data.filter(mapUtils.hasValidCoords);
     if (vis.selectedCountry) {
       filtered = filtered.filter((d) => d.country === vis.selectedCountry);
+    }
+    if (vis.selectedClass) {
+      filtered = filtered.filter((d) => d.recclass === vis.selectedClass);
+    }
+    if (vis.yearMin != null) {
+      filtered = filtered.filter((d) => d.year != null && d.year >= vis.yearMin);
+    }
+    if (vis.yearMax != null) {
+      filtered = filtered.filter((d) => d.year != null && d.year <= vis.yearMax);
     }
 
     // Determine top N classes by count
@@ -353,6 +366,10 @@ export default class MassDistributionMap {
 
   setSelectedCountry(country) {
     this.selectedCountry = country;
+  }
+
+  setSelectedClass(recclass) {
+    this.selectedClass = recclass;
   }
 
   update(data) {
