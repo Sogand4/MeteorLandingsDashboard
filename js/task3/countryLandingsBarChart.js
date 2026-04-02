@@ -65,6 +65,10 @@ export default class Task3CountryLandingsBarChart {
 
     vis.headerDiv = root.append('div').attr('class', 'bar-chart-header');
 
+    vis.headerDiv.append('div')
+      .attr('class', 'bar-chart-title')
+      .text('Meteorite Landings by Country');
+
     vis.metricToggle = vis.headerDiv.append('div').attr('class', 'bar-metric-toggle');
 
     Object.entries(METRICS).forEach(([key, m]) => {
@@ -86,7 +90,9 @@ export default class Task3CountryLandingsBarChart {
       .append('div')
       .attr('class', 'bar-chart-subtitle-text');
 
-    vis.svgContainer = root.append('svg').attr('width', vis.config.containerWidth);
+    vis.svgContainer = root.append('svg')
+      .attr('viewBox', `0 0 ${vis.config.containerWidth} ${vis.config.containerHeight}`)
+      .attr('preserveAspectRatio', 'xMinYMin meet');
 
     vis.svg = vis.svgContainer
       .append('g')
@@ -173,9 +179,10 @@ export default class Task3CountryLandingsBarChart {
     const bandStep = BAR_HEIGHT / (1 - BAR_PAD);
     vis.height = Math.max(80, numBars * bandStep);
 
+    const totalH = vis.height + vis.config.margin.top + vis.config.margin.bottom;
     vis.svgContainer.attr(
-      'height',
-      vis.height + vis.config.margin.top + vis.config.margin.bottom,
+      'viewBox',
+      `0 0 ${vis.config.containerWidth} ${totalH}`,
     );
 
     vis.xScale = d3.scaleLinear()
@@ -323,6 +330,14 @@ export default class Task3CountryLandingsBarChart {
     this.metricToggle?.select(`[data-metric="${metric}"]`).classed('active', true);
     this.updateVis();
     this.renderVis();
+  }
+
+  resize(w) {
+    const vis = this;
+    vis.config.containerWidth = w;
+    vis.width = w - vis.config.margin.left - vis.config.margin.right;
+    vis.updateVis();
+    vis.renderVis();
   }
 
   update(data) {

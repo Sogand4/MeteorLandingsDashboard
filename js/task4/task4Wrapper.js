@@ -11,6 +11,7 @@ const dispatcher = d3.dispatch('hoverTotalMeteoriteBucket', 'hoverMeteoriteType'
 const Task4 = {
   totalMeteoriteDiscoveriesBarChart: null,
   topMeteoriteDistributionBarChart: null,
+  lastConfig: null,
 
   getContainerSize(selector) {
     const el = document.querySelector(selector);
@@ -26,6 +27,7 @@ const Task4 = {
 
   init(config) {
     const { barChartContainer, data } = config;
+    Task4.lastConfig = config;
     const filteredData = FilterOutlierYears(data);
 
     const barSize = Task4.getContainerSize(barChartContainer);
@@ -51,6 +53,15 @@ const Task4 = {
     );
 
     return Task4;
+  },
+
+  resize() {
+    if (!Task4.lastConfig) return;
+    const el1 = document.getElementById('total-meteorite-discoveries-bar-chart');
+    const el2 = document.getElementById('top-meteorite-distribution-bar-chart');
+    if (el1) el1.innerHTML = '';
+    if (el2) el2.innerHTML = '';
+    Task4.init(Task4.lastConfig);
   },
 };
 

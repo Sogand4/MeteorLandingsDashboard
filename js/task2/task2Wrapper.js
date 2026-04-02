@@ -6,6 +6,7 @@ import PopulationDensityScatterPlot from './populationDensityScatterPlot.js';
 
 const Task2 = {
   populationDensityScatterPlot: null,
+  lastConfig: null,
 
   getContainerSize(selector) {
     const el = document.querySelector(selector);
@@ -21,6 +22,7 @@ const Task2 = {
 
   init(config) {
     const { scatterplotContainer, data } = config;
+    Task2.lastConfig = config;
 
     const plotSize = Task2.getContainerSize(scatterplotContainer);
 
@@ -36,6 +38,14 @@ const Task2 = {
     Task2.populationDensityScatterPlot.updateVis();
 
     return Task2;
+  },
+
+  resize() {
+    if (!Task2.lastConfig) return;
+    const el = document.querySelector(Task2.lastConfig.scatterplotContainer);
+    if (!el) return;
+    el.innerHTML = '';
+    Task2.init(Task2.lastConfig);
   },
 };
 
