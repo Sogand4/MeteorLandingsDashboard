@@ -30,7 +30,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`).tickSizeOuter(0);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('d')).ticks(5).tickSizeOuter(0);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('~s')).ticks(5).tickSizeOuter(0);
 
     vis.svg = d3
       .select(vis.config.parentElement)

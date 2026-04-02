@@ -171,19 +171,17 @@ export default class MassByClassBoxPlot {
     const minVal = d3.min(allVisibleValues);
     const maxVal = d3.max(allVisibleValues);
 
-    // Add padding
-    vis.yScale.domain([
-      minVal / 1.2,
-      maxVal * 1.2,
-    ]);
+    // Add padding to the min and max values to prevent outliers from being on the edge of the chart
+    vis.yDomainMin = 10 ** Math.floor(Math.log10(minVal / 1.2));
+    vis.yDomainMax = 10 ** Math.ceil(Math.log10(maxVal * 1.2));
 
-    const [minY, maxY] = vis.yScale.domain();
+    vis.yScale.domain([vis.yDomainMin, vis.yDomainMax]);
 
     // The y-position uses a log scale,
     // but tick labels show the original mass values in grams to help interpretability
     vis.yTickValues = d3.range(
-      Math.ceil(Math.log10(minY)),
-      Math.floor(Math.log10(maxY)) + 1,
+      Math.log10(vis.yDomainMin),
+      Math.log10(vis.yDomainMax) + 1,
     ).map((d) => 10 ** d);
 
     vis.yAxis = d3.axisLeft(vis.yScale)
