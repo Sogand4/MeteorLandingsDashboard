@@ -12,7 +12,7 @@ export function getRankedRecclasses(data, filter = () => true) {
 }
 
 /*
-    Return only the top N recclass categories from the data, based on their frequency.
+    Return only the top N recclass categories from the data, based on their frequency
 */
 export function getTopRecclasses(data, topN, filter = () => true) {
   return getRankedRecclasses(data, filter).slice(0, topN);
