@@ -223,12 +223,24 @@ export default class MassDistributionMap {
   renderPoints() {
     const vis = this;
 
+    // Project coordinates
     const projected = vis.filteredData
       .map((d) => {
         const p = vis.projection([d.lon, d.lat]);
         return p ? { ...d, px: p[0], py: p[1] } : null;
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((a, b) => {
+        const aSelected = a.recclass === vis.selectedClass;
+        const bSelected = b.recclass === vis.selectedClass;
+        if (aSelected && !bSelected) return 1;
+        if (!aSelected && bSelected) return -1;
+        const aH = vis.highlightedClasses.has(a.displayClass);
+        const bH = vis.highlightedClasses.has(b.displayClass);
+        if (aH && !bH) return 1;
+        if (!aH && bH) return -1;
+        return b.mass - a.mass;
+      });
 
     const circles = vis.pointsGroup
       .selectAll('circle')
@@ -244,7 +256,7 @@ export default class MassDistributionMap {
       .attr('cy', (d) => d.py)
       .attr('r', (d) => vis.radiusScale(Math.log10(d.mass)))
       .attr('fill', (d) => vis.classColorScale(d.displayClass))
-      .attr('fill-opacity', (d) => (vis.highlightedClasses.size === 0 || vis.highlightedClasses.has(d.displayClass) ? 0.7 : 0.07))
+      .attr('fill-opacity', (d) => (vis.highlightedClasses.size === 0 || vis.highlightedClasses.has(d.displayClass) ? 0.7 : 0.05))
       .attr('stroke', (d) => (vis.highlightedClasses.has(d.displayClass) ? '#333' : 'white'))
       .attr('stroke-width', (d) => (vis.highlightedClasses.has(d.displayClass) ? 1 : 0.3))
       .style('cursor', 'pointer')
@@ -300,6 +312,7 @@ export default class MassDistributionMap {
       .append('g')
       .attr('transform', `translate(${legendX},${legendY})`);
 
+    // Title
     g.append('text')
       .attr('x', 0).attr('y', -5)
       .attr('font-size', 11)
