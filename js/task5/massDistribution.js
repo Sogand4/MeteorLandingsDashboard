@@ -152,9 +152,6 @@ export default class MassDistributionMap {
     if (vis.selectedCountry) {
       filtered = filtered.filter((d) => d.country === vis.selectedCountry);
     }
-    if (vis.selectedClass) {
-      filtered = filtered.filter((d) => d.recclass === vis.selectedClass);
-    }
     if (vis.yearMin != null) {
       filtered = filtered.filter((d) => d.year != null && d.year >= vis.yearMin);
     }
@@ -173,26 +170,39 @@ export default class MassDistributionMap {
       .slice(0, vis.config.topN)
       .map(([c]) => c);
 
-    // Color scale: categorical hue for top classes + "Other"
+    // If selected class is not in top 7, add it with a distinct color
+    const extraClass = vis.selectedClass && !vis.topClasses.includes(vis.selectedClass)
+      ? vis.selectedClass : null;
+
     const palette = [
       '#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
       '#ff7f00', '#dbd805', '#f781bf', '#999999',
     ];
-    vis.classColorScale = d3.scaleOrdinal()
-      .domain([...vis.topClasses, 'Other'])
-      .range([...palette.slice(0, vis.topClasses.length), '#cccccc']);
 
-    // Assign display class (topN or "Other")
+    const domain = extraClass
+      ? [...vis.topClasses, extraClass, 'Other']
+      : [...vis.topClasses, 'Other'];
+
+    const range = extraClass
+      ? [...palette.slice(0, vis.topClasses.length), '#00b7ba', '#cccccc']
+      : [...palette.slice(0, vis.topClasses.length), '#cccccc'];
+
+    vis.classColorScale = d3.scaleOrdinal().domain(domain).range(range);
+
+    // Assign display class (topN, extraClass, or "Other")
     vis.filteredData = filtered
       .filter((d) => d.mass != null && d.mass > 0)
       .map((d) => ({
         ...d,
         lon: mapUtils.normalizeLon(d.reclong),
         lat: d.reclat,
-        displayClass: vis.topClasses.includes(d.recclass) ? d.recclass : 'Other',
-      }));
+        displayClass: vis.topClasses.includes(d.recclass)
+          ? d.recclass
+          : (extraClass && d.recclass === extraClass ? extraClass : 'Other'),
+      }))
+      .sort((a, b) => b.mass - a.mass);
 
-    // Log scale for radius; radius = sqrt(mass_log) keeps area proportional
+    // Log scale for radius
     const masses = vis.filteredData.map((d) => d.mass).filter((m) => m > 0);
     const logMin = Math.log10(d3.min(masses) || 1);
     const logMax = Math.log10(d3.max(masses) || 1);
@@ -213,7 +223,6 @@ export default class MassDistributionMap {
   renderPoints() {
     const vis = this;
 
-    // Project coordinates
     const projected = vis.filteredData
       .map((d) => {
         const p = vis.projection([d.lon, d.lat]);
@@ -276,7 +285,12 @@ export default class MassDistributionMap {
     const vis = this;
     vis.legendGroup.selectAll('*').remove();
 
-    const classEntries = [...vis.topClasses, 'Other'];
+    const extraClass = vis.selectedClass && !vis.topClasses.includes(vis.selectedClass)
+      ? vis.selectedClass : null;
+    const classEntries = extraClass
+      ? [...vis.topClasses, extraClass, 'Other']
+      : [...vis.topClasses, 'Other'];
+
     const rowH = 16;
     const r = 6;
     const legendX = 15;
@@ -286,7 +300,6 @@ export default class MassDistributionMap {
       .append('g')
       .attr('transform', `translate(${legendX},${legendY})`);
 
-    // Title
     g.append('text')
       .attr('x', 0).attr('y', -5)
       .attr('font-size', 11)
@@ -369,8 +382,16 @@ export default class MassDistributionMap {
   }
 
   setSelectedClass(recclass) {
-    this.selectedClass = recclass;
+  this.selectedClass = recclass;
+  this.highlightedClasses.clear();
+  if (recclass) {
+    this.highlightedClasses.add(recclass);
   }
+  if (this.filteredData) {
+    this.renderPoints();
+    this.renderLegend();
+  }
+}
 
   update(data) {
     this.data = data;
