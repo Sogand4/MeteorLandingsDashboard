@@ -215,14 +215,22 @@ export default class MassDistributionMap {
     // Assign display class (topN, extraClass, or "Other")
     vis.filteredData = filtered
       .filter((d) => d.mass != null && d.mass > 0)
-      .map((d) => ({
-        ...d,
-        lon: mapUtils.normalizeLon(d.reclong),
-        lat: d.reclat,
-        displayClass: vis.topClasses.includes(d.recclass)
-          ? d.recclass
-          : (extraClass && d.recclass === extraClass ? extraClass : 'Other'),
-      }));
+      .map((d) => {
+        let displayClass = 'Other';
+
+        if (vis.topClasses.includes(d.recclass)) {
+          displayClass = d.recclass;
+        } else if (extraClass && d.recclass === extraClass) {
+          displayClass = extraClass;
+        }
+
+        return {
+          ...d,
+          lon: mapUtils.normalizeLon(d.reclong),
+          lat: d.reclat,
+          displayClass,
+        };
+      });
 
     // Log scale for radius
     const masses = vis.filteredData.map((d) => d.mass).filter((m) => m > 0);
