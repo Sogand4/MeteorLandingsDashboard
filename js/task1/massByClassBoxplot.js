@@ -44,20 +44,6 @@ export default class MassByClassBoxPlot {
       .attr('class', 'chart-title')
       .text('Mass Distribution for Top Meteorite Classes');
 
-
-    const classCounts = d3.rollups(
-      vis.data.filter((d) => d.recclass && +d.mass > 0),
-      (values) => values.length,
-      (d) => d.recclass,
-    )
-      .sort((a, b) => d3.descending(a[1], b[1]));
-
-    vis.rankOrderedClasses = classCounts.map((d) => d[0]);
-
-    vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
-    vis.dropdownOptions = vis.rankOrderedClasses.slice(4);
-    vis.selectedDropdownClass = vis.rankOrderedClasses[4] || vis.rankOrderedClasses[0];
-
     vis.controls = vis.container
       .append('div')
       .attr('class', 'chart-controls');
@@ -74,15 +60,6 @@ export default class MassByClassBoxPlot {
         'title',
         'Classes 5+ are listed by frequency (most landings first). #n = rank among all classes.',
       );
-
-    vis.dropdown
-      .selectAll('option')
-      .data(vis.dropdownOptions)
-      .join('option')
-      .attr('value', (d) => d)
-      .text((d, i) => `${d} (#${i + 5})`);
-
-    vis.dropdown.property('value', vis.selectedDropdownClass);
 
     vis.yScale = d3.scaleLog().range([vis.height, 0]);
 
@@ -137,7 +114,7 @@ export default class MassByClassBoxPlot {
     // Show the top 4 most frequent recclasses as fixed boxplots
     // The 5th slot is user-controlled via dropdown and defaults to the 5th most frequent class
     vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
-    vis.dropdownOptions = vis.rankOrderedClasses.slice(4).sort(d3.ascending);
+    vis.dropdownOptions = vis.rankOrderedClasses.slice(4);
 
     if (
       !vis.selectedDropdownClass
@@ -152,7 +129,10 @@ export default class MassByClassBoxPlot {
       .data(vis.dropdownOptions)
       .join('option')
       .attr('value', (d) => d)
-      .text((d) => d);
+      .text((d) => {
+        const rank = vis.rankOrderedClasses.indexOf(d) + 1;
+        return `${d} (#${rank})`;
+      });
 
     vis.dropdown.property('value', vis.selectedDropdownClass);
 
