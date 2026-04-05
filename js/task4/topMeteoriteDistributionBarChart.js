@@ -1,3 +1,5 @@
+import { getTopRecclasses } from '../utils/recclassUtils.js';
+
 export default class TopMeteoriteDistributionBarChart {
   constructor(_config, data, dispatcher) {
     this.config = {
@@ -82,17 +84,10 @@ export default class TopMeteoriteDistributionBarChart {
   updateVis() {
     const vis = this;
 
-    const recclassCounts = d3.rollups(
-      vis.data,
-      (group) => group.length,
-      (d) => d.recclass,
-    );
+    vis.topRecclasses = getTopRecclasses(vis.data, 4);
 
-    vis.topRecclasses = recclassCounts
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
-      .map((d) => d[0]);
-
+    // Keep separate stacks for the top 4 classes and collapse everything else
+    // into a single "Other" category so the chart stays readable
     vis.stackKeys = [...vis.topRecclasses, 'Other'];
 
     const processedData = vis.data.map((d) => {
@@ -117,6 +112,8 @@ export default class TopMeteoriteDistributionBarChart {
     vis.stackedData = rolled.map(([yearBucket, classEntries]) => {
       const obj = { year: yearBucket };
 
+      // Pre-fill every stack key with 0 so each decade has the same object shape,
+      // even if a class does not appear in that bucket
       vis.stackKeys.forEach((key) => {
         obj[key] = 0;
       });
@@ -131,6 +128,8 @@ export default class TopMeteoriteDistributionBarChart {
     vis.stackedData.forEach((d) => {
       const total = d3.sum(vis.stackKeys, (key) => d[key]);
 
+      // Convert raw counts to proportions so each stacked bar represents 100%
+      // of discoveries in that decade
       vis.stackKeys.forEach((key) => {
         d[key] /= total;
       });
@@ -175,6 +174,7 @@ export default class TopMeteoriteDistributionBarChart {
       .attr('width', vis.xScale.bandwidth())
       .attr('height', (d) => vis.yScale(d[0]) - vis.yScale(d[1]))
       .on('mouseenter', (event, d) => {
+        // highlight only the hovered class segment and dim all other stacked segments
         bars
           .classed('is-highlighted', false)
           .classed(
@@ -193,6 +193,7 @@ export default class TopMeteoriteDistributionBarChart {
       });
 
     vis.dispatcher.on('hoverTotalMeteoriteBucket', (bucket) => {
+      // highlight the matching decade across all stacked segments
       if (bucket == null) {
         bars
           .classed('is-highlighted', false)

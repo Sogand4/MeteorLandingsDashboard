@@ -3,6 +3,9 @@
  * - Boxplot in D3: https://d3-graph-gallery.com/graph/boxplot_basic.html
  * - Boxplot tutorial: https://observablehq.com/@d3/box-plot/2
 */
+
+import { getRankedRecclasses } from '../utils/recclassUtils.js';
+
 export default class MassByClassBoxPlot {
   constructor(_config, data) {
     this.config = {
@@ -18,6 +21,8 @@ export default class MassByClassBoxPlot {
     };
 
     this.data = data;
+    this.selectedDropdownClass = null;
+
     this.initVis();
   }
 
@@ -39,21 +44,6 @@ export default class MassByClassBoxPlot {
       .attr('class', 'chart-title')
       .text('Mass Distribution for Top Meteorite Classes');
 
-    const classCounts = d3.rollups(
-      vis.data.filter((d) => d.recclass && +d.mass > 0),
-      (values) => values.length,
-      (d) => d.recclass,
-    )
-      .sort((a, b) => d3.descending(a[1], b[1]));
-
-    vis.rankOrderedClasses = classCounts.map((d) => d[0]);
-
-    // Show the top 4 most frequent recclasses as fixed boxplots
-    // The 5th slot is user-controlled via dropdown and defaults to the 5th most frequent class
-    vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
-    vis.dropdownOptions = vis.rankOrderedClasses.slice(4).sort(d3.ascending);
-    vis.selectedDropdownClass = vis.rankOrderedClasses[4] || vis.rankOrderedClasses[0];
-
     vis.controls = vis.container
       .append('div')
       .attr('class', 'chart-controls');
@@ -67,15 +57,6 @@ export default class MassByClassBoxPlot {
       .append('select')
       .attr('id', 'class-select-5');
 
-    vis.dropdown
-      .selectAll('option')
-      .data(vis.dropdownOptions)
-      .join('option')
-      .attr('value', (d) => d)
-      .text((d) => d);
-
-    vis.dropdown.property('value', vis.selectedDropdownClass);
-
     vis.yScale = d3.scaleLog().range([vis.height, 0]);
 
     vis.xScale = d3.scaleBand()
@@ -83,6 +64,13 @@ export default class MassByClassBoxPlot {
       .padding(0.3);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickSizeOuter(0);
+
+    const colours = d3.schemeTableau10;
+    vis.colourScale = d3.scaleOrdinal(colours);
+    // Keep the dropdown-selected class visually consistent by assigning it a
+    // static colour, regardless of which recclass is selected
+    const [, , , , dropdowncolour] = colours;
+    vis.dropdowncolour = dropdowncolour;
 
     vis.svg = vis.container
       .append('svg')
@@ -117,8 +105,33 @@ export default class MassByClassBoxPlot {
   updateVis() {
     const vis = this;
 
+    vis.rankOrderedClasses = getRankedRecclasses(vis.data, (d) => d.recclass && +d.mass > 0);
+
+    // Show the top 4 most frequent recclasses as fixed boxplots
+    // The 5th slot is user-controlled via dropdown and defaults to the 5th most frequent class
+    vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
+    vis.dropdownOptions = vis.rankOrderedClasses.slice(4).sort(d3.ascending);
+
+    if (
+      !vis.selectedDropdownClass
+      || !vis.rankOrderedClasses.includes(vis.selectedDropdownClass)
+      || vis.fixedClasses.includes(vis.selectedDropdownClass)
+    ) {
+      vis.selectedDropdownClass = vis.rankOrderedClasses[4] || vis.rankOrderedClasses[0];
+    }
+
+    vis.dropdown
+      .selectAll('option')
+      .data(vis.dropdownOptions)
+      .join('option')
+      .attr('value', (d) => d)
+      .text((d) => d);
+
+    vis.dropdown.property('value', vis.selectedDropdownClass);
+
     vis.selectedClasses = [...vis.fixedClasses, vis.selectedDropdownClass];
     vis.xScale.domain(vis.selectedClasses);
+    vis.colourScale.domain(vis.selectedClasses);
 
     vis.boxData = vis.selectedClasses
       .map((recclass) => {
@@ -158,20 +171,23 @@ export default class MassByClassBoxPlot {
     const minVal = d3.min(allVisibleValues);
     const maxVal = d3.max(allVisibleValues);
 
-    // Add padding
-    vis.yScale.domain([
-      minVal / 1.2,
-      maxVal * 1.2,
-    ]);
+    // Add padding to the min and max values to prevent outliers from being on the edge of the chart
+    vis.yDomainMin = 10 ** Math.floor(Math.log10(minVal / 1.2));
+    vis.yDomainMax = 10 ** Math.ceil(Math.log10(maxVal * 1.2));
 
-    const [minY, maxY] = vis.yScale.domain();
+    vis.yScale.domain([vis.yDomainMin, vis.yDomainMax]);
 
     // The y-position uses a log scale,
     // but tick labels show the original mass values in grams to help interpretability
     vis.yTickValues = d3.range(
-      Math.ceil(Math.log10(minY)),
-      Math.floor(Math.log10(maxY)) + 1,
+      Math.log10(vis.yDomainMin),
+      Math.log10(vis.yDomainMax) + 1,
     ).map((d) => 10 ** d);
+
+    vis.yAxis = d3.axisLeft(vis.yScale)
+      .tickValues(vis.yTickValues)
+      .tickFormat(d3.format('~s'))
+      .tickSizeOuter(0);
 
     vis.renderVis();
   }
@@ -180,12 +196,6 @@ export default class MassByClassBoxPlot {
     const vis = this;
 
     const boxWidth = Math.min(42, vis.xScale.bandwidth() * 0.65);
-
-    const colorScale = d3.scaleOrdinal(d3.schemeTableau10)
-      .domain(vis.rankOrderedClasses);
-    // Keep the dropdown-selected class visually consistent by assigning it a
-    // static color, regardless of which recclass is selected
-    const dropdownColor = d3.schemeTableau10[4];
 
     vis.boxGroups = vis.chartArea
       .selectAll('.box-group')
@@ -217,8 +227,8 @@ export default class MassByClassBoxPlot {
       .attr('y', (d) => vis.yScale(d.quartiles[2]))
       .attr('height', (d) => vis.yScale(d.quartiles[0]) - vis.yScale(d.quartiles[2]))
       .attr('fill', (d) => (d.recclass === vis.selectedDropdownClass
-        ? dropdownColor
-        : colorScale(d.recclass)));
+        ? vis.dropdowncolour
+        : vis.colourScale(d.recclass)));
 
     vis.boxGroups
       .selectAll('.median-line')
@@ -261,13 +271,8 @@ export default class MassByClassBoxPlot {
       .attr('cx', 0)
       .attr('cy', (d) => vis.yScale(d.value))
       .attr('fill', (d) => (d.recclass === vis.selectedDropdownClass
-        ? dropdownColor
-        : colorScale(d.recclass)));
-
-    vis.yAxis = d3.axisLeft(vis.yScale)
-      .tickValues(vis.yTickValues)
-      .tickFormat(d3.format('~s'))
-      .tickSizeOuter(0);
+        ? vis.dropdowncolour
+        : vis.colourScale(d.recclass)));
 
     vis.yAxisGroup.call(vis.yAxis);
 

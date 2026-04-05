@@ -123,35 +123,6 @@ class PopulationDensityScatterPlot {
       .sort((a, b) => a.landings - b.landings);
   }
 
-  static buildPowerOfTenTicks(maxValue) {
-    const ticks = [];
-    let power = 0;
-
-    while (10 ** power <= maxValue) {
-      ticks.push(10 ** power);
-      power += 1;
-    }
-
-    return ticks;
-  }
-
-  static buildTicksWithMax(baseTicks, maxValue) {
-    const ticks = [...baseTicks];
-
-    if (!ticks.includes(maxValue)) {
-      ticks.push(maxValue);
-    }
-
-    return [...new Set(ticks)].sort((a, b) => a - b);
-  }
-
-  static formatMaxTick(value) {
-    if (value >= 1000) {
-      return `${(value / 1000).toFixed(2)}k`;
-    }
-    return value.toFixed(2);
-  }
-
   updateVis() {
     const vis = this;
     vis.wrangleData();
@@ -163,24 +134,28 @@ class PopulationDensityScatterPlot {
 
     if (!(vis.xMax > 0) || !(vis.yMax > 0)) return;
 
+    vis.xDomainMax = 10 ** Math.ceil(Math.log10(vis.xMax));
+    vis.yDomainMax = 10 ** Math.ceil(Math.log10(vis.yMax));
+
     vis.xScale = d3
       .scaleLog()
-      .domain([1, vis.xMax])
+      .domain([1, vis.xDomainMax])
       .range([0, vis.width]);
 
     vis.yScale = d3
       .scaleLog()
-      .domain([1, vis.yMax])
+      .domain([1, vis.yDomainMax])
       .range([vis.height, 0]);
 
-    const baseXTicks = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000]
-      .filter((d) => d >= 1 && d <= vis.xMax);
+    vis.xTickValues = d3.range(
+      Math.ceil(Math.log10(1)),
+      Math.floor(Math.log10(vis.xDomainMax)) + 1,
+    ).map((d) => 10 ** d);
 
-    const baseYTicks = PopulationDensityScatterPlot.buildPowerOfTenTicks(vis.yMax);
-
-    vis.xTicks = PopulationDensityScatterPlot.buildTicksWithMax(baseXTicks, vis.xMax);
-    vis.yGridTicks = PopulationDensityScatterPlot.buildTicksWithMax(baseYTicks, vis.yMax);
-    vis.yAxisTicks = PopulationDensityScatterPlot.buildTicksWithMax(baseYTicks, vis.yMax);
+    vis.yTickValues = d3.range(
+      Math.ceil(Math.log10(1)),
+      Math.floor(Math.log10(vis.yDomainMax)) + 1,
+    ).map((d) => 10 ** d);
 
     vis.renderVis();
   }
@@ -188,41 +163,34 @@ class PopulationDensityScatterPlot {
   renderVis() {
     const vis = this;
 
-    const xTickFormat = (d) => {
-      if (d === vis.xMax) return PopulationDensityScatterPlot.formatMaxTick(d);
-      return d3.format('~s')(d);
-    };
-
-    const yTickFormat = (d) => {
-      if (d === vis.yMax) return PopulationDensityScatterPlot.formatMaxTick(d);
-      return d3.format('~s')(d);
-    };
-
     vis.xGridGroup.call(
       d3.axisBottom(vis.xScale)
-        .tickValues(vis.xTicks)
+        .tickValues(vis.xTickValues)
         .tickSize(-vis.height)
         .tickFormat(''),
     );
 
     vis.yGridGroup.call(
       d3.axisLeft(vis.yScale)
-        .tickValues(vis.yGridTicks)
+        .tickValues(vis.yTickValues)
         .tickSize(-vis.width)
         .tickFormat(''),
     );
 
     vis.xAxisGroup.call(
       d3.axisBottom(vis.xScale)
-        .tickValues(vis.xTicks)
-        .tickFormat(xTickFormat),
+        .tickValues(vis.xTickValues)
+        .tickFormat(d3.format('~s')),
     );
 
     vis.yAxisGroup.call(
       d3.axisLeft(vis.yScale)
-        .tickValues(vis.yAxisTicks)
-        .tickFormat(yTickFormat),
+        .tickValues(vis.yTickValues)
+        .tickFormat(d3.format('~s')),
     );
+
+    vis.xGridGroup.select('.tick:first-of-type line').remove();
+    vis.yGridGroup.select('.tick:first-of-type line').remove();
 
     vis.chart.selectAll('.grid .domain').remove();
 
@@ -239,15 +207,6 @@ class PopulationDensityScatterPlot {
       .attr('font-size', '9px')
       .attr('dy', '0.9em')
       .style('text-anchor', 'middle');
-
-    const xTicks = vis.xAxisGroup.selectAll('.tick').nodes();
-    if (xTicks.length >= 2) {
-      const secondLastTick = d3.select(xTicks[xTicks.length - 2]).select('text');
-      const lastTick = d3.select(xTicks[xTicks.length - 1]).select('text');
-
-      secondLastTick.attr('dx', '-0.7em');
-      lastTick.attr('dx', '0.7em');
-    }
 
     const points = vis.plotArea
       .selectAll('.scatter-point')
