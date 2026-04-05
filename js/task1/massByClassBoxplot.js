@@ -74,8 +74,8 @@ export default class MassByClassBoxPlot {
 
     vis.svg = vis.container
       .append('svg')
-      .attr('width', vis.config.containerWidth)
-      .attr('height', vis.config.containerHeight)
+      .attr('viewBox', `0 0 ${vis.config.containerWidth} ${vis.config.containerHeight}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
       .attr('id', 'mass-by-class-boxplot-svg');
 
     vis.chartArea = vis.svg

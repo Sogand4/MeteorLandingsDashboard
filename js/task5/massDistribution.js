@@ -49,8 +49,8 @@ export default class MassDistributionMap {
     vis.svgRoot = d3
       .select(vis.config.parentElement)
       .append('svg')
-      .attr('width', vis.config.containerWidth)
-      .attr('height', vis.config.containerHeight);
+      .attr('viewBox', `0 0 ${vis.config.containerWidth} ${vis.config.containerHeight}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
 
     vis.svg = vis.svgRoot
       .append('g')
@@ -362,6 +362,20 @@ export default class MassDistributionMap {
 
   setSelectedClass(recclass) {
     this.selectedClass = recclass;
+  }
+
+  resize(w, h) {
+    const vis = this;
+    vis.config.containerWidth = w;
+    vis.config.containerHeight = h;
+    vis.svgRoot.attr('viewBox', `0 0 ${w} ${h}`);
+    vis.svgRoot.select('text').attr('x', w / 2);
+    vis.svgRoot.select('.zoom-reset').attr('x', w - 10);
+    vis.projection.fitSize([vis.width, vis.height], { type: 'Sphere' });
+    vis.path = d3.geoPath().projection(vis.projection);
+    vis.svgRoot.transition().duration(0).call(vis.zoom.transform, d3.zoomIdentity);
+    vis.renderVis();
+    vis.updateVis();
   }
 
   update(data) {

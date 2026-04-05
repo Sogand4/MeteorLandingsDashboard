@@ -16,7 +16,7 @@ export default class Task3Map {
       containerWidth: _config.containerWidth || 600,
       containerHeight: _config.containerHeight || 400,
       margin: {
-        top: 10, right: 10, bottom: 10, left: 10,
+        top: 30, right: 10, bottom: 10, left: 10,
       },
       hexRadius: _config.hexRadius || 3,
     };
@@ -38,8 +38,8 @@ export default class Task3Map {
     vis.svgRoot = d3
       .select(vis.config.parentElement)
       .append('svg')
-      .attr('width', vis.config.containerWidth)
-      .attr('height', vis.config.containerHeight);
+      .attr('viewBox', `0 0 ${vis.config.containerWidth} ${vis.config.containerHeight}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
 
     vis.svg = vis.svgRoot
       .append('g')
@@ -60,6 +60,15 @@ export default class Task3Map {
       .style('position', 'absolute')
       .style('visibility', 'hidden')
       .style('pointer-events', 'none');
+
+    vis.svgRoot.append('text')
+      .attr('x', vis.config.containerWidth / 2)
+      .attr('y', vis.config.margin.top / 2)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', 20)
+      .attr('font-weight', 'bold')
+      .attr('fill', '#333')
+      .text('Spatial Density of Meteorite Landings');
   }
 
   async loadWorldMap() {
@@ -352,6 +361,21 @@ export default class Task3Map {
 
   hide() {
     if (this.svgRoot) this.svgRoot.style('display', 'none');
+  }
+
+  resize(w, h) {
+    const vis = this;
+    vis.config.containerWidth = w;
+    vis.config.containerHeight = h;
+    vis.width = w - vis.config.margin.left - vis.config.margin.right;
+    vis.height = h - vis.config.margin.top - vis.config.margin.bottom;
+    vis.svgRoot.attr('viewBox', `0 0 ${w} ${h}`);
+    vis.svgRoot.select('text').attr('x', w / 2);
+    vis.projection.fitSize([vis.width, vis.height], { type: 'Sphere' });
+    vis.path = d3.geoPath().projection(vis.projection);
+    vis.config.hexRadius = Math.max(1.5, w / 240);
+    vis.updateVis();
+    vis.renderVis();
   }
 
   update(data) {

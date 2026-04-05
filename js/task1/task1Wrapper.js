@@ -6,6 +6,7 @@ import MassByClassBoxPlot from './massByClassBoxplot.js';
 
 const Task1 = {
   massByClassBoxPlot: null,
+  lastConfig: null,
 
   getContainerSize(selector) {
     const el = document.querySelector(selector);
@@ -21,6 +22,7 @@ const Task1 = {
 
   init(config) {
     const { boxplotContainer, data } = config;
+    Task1.lastConfig = config;
 
     const plotSize = Task1.getContainerSize(boxplotContainer);
 
@@ -34,6 +36,14 @@ const Task1 = {
     );
 
     return Task1;
+  },
+
+  resize() {
+    if (!Task1.lastConfig) return;
+    const el = document.querySelector(Task1.lastConfig.boxplotContainer);
+    if (!el) return;
+    el.innerHTML = '';
+    Task1.init(Task1.lastConfig);
   },
 };
 

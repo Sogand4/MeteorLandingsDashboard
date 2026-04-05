@@ -39,8 +39,8 @@ export default class TopMeteoriteDistributionBarChart {
     vis.svg = d3
       .select(vis.config.parentElement)
       .append('svg')
-      .attr('width', vis.config.containerWidth)
-      .attr('height', vis.config.containerHeight)
+      .attr('viewBox', `0 0 ${vis.config.containerWidth} ${vis.config.containerHeight}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
       .attr('id', 'top-meteorite-distribution-bar-chart-svg');
 
     vis.svg
