@@ -360,7 +360,7 @@ body {
 }
 
 #task3-country-bar {
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
 }
 
