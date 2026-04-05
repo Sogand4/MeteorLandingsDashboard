@@ -13,6 +13,7 @@ function parseMeteoriteRow(d) {
   return {
     ...d,
     id: +d.id,
+    recclass: d.recclass ? d.recclass.trim() : d.recclass,
     year: d.year ? +d.year : null,
     mass: d['mass (g)'] ? +d['mass (g)'] : null,
     reclat: d.reclat ? +d.reclat : null,
