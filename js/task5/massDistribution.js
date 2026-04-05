@@ -175,8 +175,8 @@ export default class MassDistributionMap {
       ? vis.selectedClass : null;
 
     const palette = [
-      '#e41a1c', '#377eb8', '#4daf4a', '#984ea3',
-      '#ff7f00', '#dbd805', '#f781bf', '#999999',
+      '#E69F00', '#56B4E9', '#009E73', '#F0E442',
+      '#0072B2', '#D55E00', '#CC79A7', '#8A51DA',
     ];
 
     const domain = extraClass
