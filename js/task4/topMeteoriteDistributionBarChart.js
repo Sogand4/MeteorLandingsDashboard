@@ -31,7 +31,15 @@ export default class TopMeteoriteDistributionBarChart {
     vis.xScale = d3.scaleBand().range([0, vis.width]).padding(0.15);
     vis.yScale = d3.scaleLinear().range([vis.height, 0]).domain([0, 1]);
 
-    vis.colorScale = d3.scaleOrdinal(d3.schemeTableau10);
+    const styles = getComputedStyle(document.documentElement);
+    const categoricalColors = [
+      styles.getPropertyValue('--cat-1').trim(),
+      styles.getPropertyValue('--cat-2').trim(),
+      styles.getPropertyValue('--cat-3').trim(),
+      styles.getPropertyValue('--cat-4').trim(),
+      styles.getPropertyValue('--cat-5').trim(),
+    ];
+    vis.colorScale = d3.scaleOrdinal(categoricalColors);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`).tickSizeOuter(0);
     vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('.0%')).ticks(5).tickSizeOuter(0);
