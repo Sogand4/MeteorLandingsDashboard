@@ -189,20 +189,28 @@ export default class MassDistributionMap {
     const extraClass = vis.selectedClass && !vis.topClasses.includes(vis.selectedClass)
       ? vis.selectedClass : null;
 
-    const palette = [
-      '#E69F00', '#56B4E9', '#009E73', '#F0E442',
-      '#0072B2', '#D55E00', '#CC79A7', '#8A51DA',
-    ];
+    const styles = getComputedStyle(document.documentElement);
+const palette = [
+  styles.getPropertyValue('--cat-1').trim(),
+  styles.getPropertyValue('--cat-2').trim(),
+  styles.getPropertyValue('--cat-3').trim(),
+  styles.getPropertyValue('--cat-4').trim(),
+  styles.getPropertyValue('--cat-5').trim(),
+  styles.getPropertyValue('--cat-6').trim(),
+  styles.getPropertyValue('--cat-7').trim(),
+];
 
-    const domain = extraClass
-      ? [...vis.topClasses, extraClass, 'Other']
-      : [...vis.topClasses, 'Other'];
+const extraColor = styles.getPropertyValue('--cat-8').trim();
 
-    const range = extraClass
-      ? [...palette.slice(0, vis.topClasses.length), '#00b7ba', '#cccccc']
-      : [...palette.slice(0, vis.topClasses.length), '#cccccc'];
+const domain = extraClass
+  ? [...vis.topClasses, extraClass, 'Other']
+  : [...vis.topClasses, 'Other'];
 
-    vis.classColorScale = d3.scaleOrdinal().domain(domain).range(range);
+const range = extraClass
+  ? [...palette.slice(0, vis.topClasses.length), extraColor, '#cccccc']
+  : [...palette.slice(0, vis.topClasses.length), '#cccccc'];
+
+vis.classColorScale = d3.scaleOrdinal().domain(domain).range(range);
 
     // Assign display class (topN, extraClass, or "Other")
     vis.filteredData = filtered
