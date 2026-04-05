@@ -19,6 +19,7 @@ export default class Task3Map {
         top: 30, right: 10, bottom: 10, left: 10,
       },
       hexRadius: _config.hexRadius || 3,
+      onCountrySelect: _config.onCountrySelect ?? (() => {}),
     };
     this.data = data;
     this.countries = null;
@@ -53,6 +54,16 @@ export default class Task3Map {
       .fitSize([vis.width, vis.height], { type: 'Sphere' });
     vis.path = d3.geoPath().projection(vis.projection);
 
+    vis.zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => {
+        vis.mapGroup.attr('transform', event.transform);
+      });
+    vis.svgRoot.call(vis.zoom);
+
+    vis.mapGroup = vis.svg.append('g').attr('class', 't3-map');
+    vis.legendGroup = vis.svg.append('g').attr('class', 't3-legend');
+
     vis.tooltip = d3
       .select('body')
       .append('div')
@@ -69,6 +80,20 @@ export default class Task3Map {
       .attr('font-weight', 'bold')
       .attr('fill', '#333')
       .text('Spatial Density of Meteorite Landings');
+
+    vis.svgRoot.append('text')
+      .attr('class', 'zoom-reset')
+      .attr('x', vis.config.containerWidth - 10)
+      .attr('y', 16)
+      .attr('text-anchor', 'end')
+      .attr('font-size', 11)
+      .attr('fill', '#555')
+      .style('cursor', 'pointer')
+      .text('Reset zoom')
+      .on('click', (event) => {
+        event.stopPropagation();
+        vis.svgRoot.transition().duration(300).call(vis.zoom.transform, d3.zoomIdentity);
+      });
   }
 
   async loadWorldMap() {
@@ -152,25 +177,45 @@ export default class Task3Map {
   renderVis() {
     const vis = this;
 
-    vis.svg.selectAll('.hexbin').remove();
-    vis.svg.selectAll('.country').remove();
-    vis.svg.selectAll('.graticule').remove();
-    vis.svg.selectAll('.legend').remove();
+    vis.mapGroup.selectAll('*').remove();
+    vis.legendGroup.selectAll('*').remove();
 
     if (vis.countries) {
-      vis.svg
+      if (!vis.geoNameMap) {
+        vis.geoNameMap = new Map();
+        const pts = vis.data.filter(mapUtils.hasValidCoords);
+        vis.countries.forEach((feature) => {
+          const match = pts.find((d) => d3.geoContains(
+            feature,
+            [mapUtils.normalizeLon(d.reclong), d.reclat],
+          ));
+          if (match) vis.geoNameMap.set(feature, match.country);
+        });
+      }
+      const hasSelection = !!vis.selectedCountry;
+      vis.mapGroup
         .append('g')
         .attr('class', 'country')
         .selectAll('path')
         .data(vis.countries)
         .join('path')
         .attr('d', vis.path)
-        .attr('fill', '#f0f0f0')
-        .attr('stroke', '#ccc')
-        .attr('stroke-width', 0.5);
+        .attr('fill', hasSelection ? '#e8e8e8' : '#f0f0f0')
+        .attr('stroke', hasSelection ? '#ddd' : '#ccc')
+        .attr('stroke-width', 0.5)
+        .attr('opacity', hasSelection ? 0.6 : 1)
+        .style('cursor', 'pointer')
+        .on('click', (event, feature) => {
+          event.stopPropagation();
+          const country = vis.geoNameMap.get(feature) || null;
+          if (!country) return;
+          vis.config.onCountrySelect(
+            country === vis.selectedCountry ? null : country,
+          );
+        });
     } else {
       const graticule = d3.geoGraticule10();
-      vis.svg
+      vis.mapGroup
         .append('path')
         .attr('class', 'graticule')
         .attr('d', vis.path(graticule()))
@@ -178,7 +223,7 @@ export default class Task3Map {
         .attr('stroke', '#ddd');
     }
 
-    const hexPaths = vis.svg
+    const hexPaths = vis.mapGroup
       .append('g')
       .attr('class', 'hexbin')
       .selectAll('path')
@@ -290,7 +335,7 @@ export default class Task3Map {
     const fmt = (n) => (Number.isFinite(n) ? d3.format(',')(Math.round(n)) : '0');
 
     const legendHeight = 25 + (steps + 1) * barHeight;
-    const legend = vis.svg
+    const legend = vis.legendGroup
       .append('g')
       .attr('class', 'legend')
       .attr(
@@ -371,6 +416,8 @@ export default class Task3Map {
     vis.height = h - vis.config.margin.top - vis.config.margin.bottom;
     vis.svgRoot.attr('viewBox', `0 0 ${w} ${h}`);
     vis.svgRoot.select('text').attr('x', w / 2);
+    vis.svgRoot.select('.zoom-reset').attr('x', w - 10);
+    vis.svgRoot.transition().duration(0).call(vis.zoom.transform, d3.zoomIdentity);
     vis.projection.fitSize([vis.width, vis.height], { type: 'Sphere' });
     vis.path = d3.geoPath().projection(vis.projection);
     vis.config.hexRadius = Math.max(1.5, w / 240);

@@ -44,7 +44,7 @@ export default class Task3CountryLandingsBarChart {
       containerWidth: _config.containerWidth || 280,
       containerHeight: _config.containerHeight || 200,
       margin: {
-        top: 6, right: 40, bottom: 14, left: 100,
+        top: 6, right: 40, bottom: 30, left: 140,
       },
       topN: _config.topN ?? 10,
       onCountrySelect: _config.onCountrySelect ?? (() => {}),

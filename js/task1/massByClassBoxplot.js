@@ -50,12 +50,16 @@ export default class MassByClassBoxPlot {
 
     vis.controls
       .append('label')
-      .attr('for', 'class-select-5')
-      .text('5th class:');
+      .attr('for', 'class-select-compare')
+      .text('5th class (by landing count):');
 
     vis.dropdown = vis.controls
       .append('select')
-      .attr('id', 'class-select-5');
+      .attr('id', 'class-select-compare')
+      .attr(
+        'title',
+        'Classes 5+ are listed by frequency (most landings first). #n = rank among all classes.',
+      );
 
     vis.yScale = d3.scaleLog().range([vis.height, 0]);
 
@@ -118,7 +122,7 @@ export default class MassByClassBoxPlot {
     // Show the top 4 most frequent recclasses as fixed boxplots
     // The 5th slot is user-controlled via dropdown and defaults to the 5th most frequent class
     vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
-    vis.dropdownOptions = vis.rankOrderedClasses.slice(4).sort(d3.ascending);
+    vis.dropdownOptions = vis.rankOrderedClasses.slice(4);
 
     if (
       !vis.selectedDropdownClass
@@ -133,7 +137,10 @@ export default class MassByClassBoxPlot {
       .data(vis.dropdownOptions)
       .join('option')
       .attr('value', (d) => d)
-      .text((d) => d);
+      .text((d) => {
+        const rank = vis.rankOrderedClasses.indexOf(d) + 1;
+        return `${d} (#${rank})`;
+      });
 
     vis.dropdown.property('value', vis.selectedDropdownClass);
 
