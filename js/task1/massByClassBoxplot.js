@@ -48,10 +48,8 @@ export default class MassByClassBoxPlot {
 
     vis.rankOrderedClasses = classCounts.map((d) => d[0]);
 
-    // Show the top 4 most frequent recclasses as fixed boxplots
-    // The 5th slot is user-controlled via dropdown and defaults to the 5th most frequent class
     vis.fixedClasses = vis.rankOrderedClasses.slice(0, 4);
-    vis.dropdownOptions = vis.rankOrderedClasses.slice(4).sort(d3.ascending);
+    vis.dropdownOptions = vis.rankOrderedClasses.slice(4);
     vis.selectedDropdownClass = vis.rankOrderedClasses[4] || vis.rankOrderedClasses[0];
 
     vis.controls = vis.container
@@ -60,19 +58,19 @@ export default class MassByClassBoxPlot {
 
     vis.controls
       .append('label')
-      .attr('for', 'class-select-5')
+      .attr('for', 'class-select-compare')
       .text('5th class:');
 
     vis.dropdown = vis.controls
       .append('select')
-      .attr('id', 'class-select-5');
+      .attr('id', 'class-select-compare');
 
     vis.dropdown
       .selectAll('option')
       .data(vis.dropdownOptions)
       .join('option')
       .attr('value', (d) => d)
-      .text((d) => d);
+      .text((d, i) => `${d} (#${i + 5})`);
 
     vis.dropdown.property('value', vis.selectedDropdownClass);
 

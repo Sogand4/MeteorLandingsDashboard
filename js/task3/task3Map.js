@@ -19,6 +19,7 @@ export default class Task3Map {
         top: 30, right: 10, bottom: 10, left: 10,
       },
       hexRadius: _config.hexRadius || 3,
+      onCountrySelect: _config.onCountrySelect ?? (() => {}),
     };
     this.data = data;
     this.countries = null;
@@ -180,6 +181,18 @@ export default class Task3Map {
     vis.legendGroup.selectAll('*').remove();
 
     if (vis.countries) {
+      if (!vis.geoNameMap) {
+        vis.geoNameMap = new Map();
+        const pts = vis.data.filter(mapUtils.hasValidCoords);
+        vis.countries.forEach((feature) => {
+          const match = pts.find((d) => d3.geoContains(
+            feature,
+            [mapUtils.normalizeLon(d.reclong), d.reclat],
+          ));
+          if (match) vis.geoNameMap.set(feature, match.country);
+        });
+      }
+      const hasSelection = !!vis.selectedCountry;
       vis.mapGroup
         .append('g')
         .attr('class', 'country')
@@ -187,9 +200,19 @@ export default class Task3Map {
         .data(vis.countries)
         .join('path')
         .attr('d', vis.path)
-        .attr('fill', '#f0f0f0')
-        .attr('stroke', '#ccc')
-        .attr('stroke-width', 0.5);
+        .attr('fill', hasSelection ? '#e8e8e8' : '#f0f0f0')
+        .attr('stroke', hasSelection ? '#ddd' : '#ccc')
+        .attr('stroke-width', 0.5)
+        .attr('opacity', hasSelection ? 0.6 : 1)
+        .style('cursor', 'pointer')
+        .on('click', (event, feature) => {
+          event.stopPropagation();
+          const country = vis.geoNameMap.get(feature) || null;
+          if (!country) return;
+          vis.config.onCountrySelect(
+            country === vis.selectedCountry ? null : country,
+          );
+        });
     } else {
       const graticule = d3.geoGraticule10();
       vis.mapGroup

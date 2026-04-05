@@ -104,6 +104,7 @@ const MapWrapper = {
         containerWidth: mapSize.width,
         containerHeight: mapSize.height,
         hexRadius: Math.max(1.5, mapSize.width / 240),
+        onCountrySelect,
       },
       data,
     );
@@ -113,6 +114,7 @@ const MapWrapper = {
         parentElement: mapContainer,
         containerWidth: mapSize.width,
         containerHeight: mapSize.height,
+        onCountrySelect,
       },
       data,
     );

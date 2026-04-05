@@ -226,7 +226,9 @@ const FilterHistory = {
 };
 
 d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
-  const data = raw.map(parseMeteoriteRow);
+  const currentYear = new Date().getFullYear();
+  const data = raw.map(parseMeteoriteRow)
+    .filter((d) => d.year == null || (d.year >= 1900 && d.year <= currentYear));
 
   populateClassFilter(data);
 
