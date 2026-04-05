@@ -13,6 +13,7 @@ function parseMeteoriteRow(d) {
   return {
     ...d,
     id: +d.id,
+    recclass: d.recclass ? d.recclass.trim() : d.recclass,
     year: d.year ? +d.year : null,
     mass: d['mass (g)'] ? +d['mass (g)'] : null,
     reclat: d.reclat ? +d.reclat : null,
@@ -226,7 +227,9 @@ const FilterHistory = {
 };
 
 d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
-  const data = raw.map(parseMeteoriteRow);
+  const currentYear = new Date().getFullYear();
+  const data = raw.map(parseMeteoriteRow)
+    .filter((d) => d.year == null || (d.year >= 1900 && d.year <= currentYear));
 
   populateClassFilter(data);
 
@@ -339,6 +342,17 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
     Task1.init({
       boxplotContainer: '#mass-by-class-boxplot',
       data,
+    });
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        MapWrapper.resize();
+        Task1.resize();
+        Task2.resize();
+        Task4.resize();
+      }, 200);
     });
   });
 });

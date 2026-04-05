@@ -9,6 +9,7 @@
  * - VAD Chapter 5: Marks and channels – area size for quantitative, hue for categorical
  */
 import mapUtils from '../utils/mapUtils.js';
+import { getTopRecclasses } from '../utils/recclassUtils.js';
 
 export default class MassDistributionMap {
   constructor(_config, data) {
@@ -20,6 +21,7 @@ export default class MassDistributionMap {
         top: 30, right: 20, bottom: 2, left: 20,
       },
       topN: 7,
+      onCountrySelect: _config.onCountrySelect ?? (() => {}),
     };
     this.data = data;
     this.countries = null;
@@ -48,8 +50,8 @@ export default class MassDistributionMap {
     vis.svgRoot = d3
       .select(vis.config.parentElement)
       .append('svg')
-      .attr('width', vis.config.containerWidth)
-      .attr('height', vis.config.containerHeight);
+      .attr('viewBox', `0 0 ${vis.config.containerWidth} ${vis.config.containerHeight}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
 
     vis.svg = vis.svgRoot
       .append('g')
@@ -122,14 +124,36 @@ export default class MassDistributionMap {
     vis.baseGroup.selectAll('*').remove();
 
     if (vis.countries) {
+      if (!vis.geoNameMap) {
+        vis.geoNameMap = new Map();
+        const pts = vis.data.filter(mapUtils.hasValidCoords);
+        vis.countries.forEach((feature) => {
+          const match = pts.find((d) => d3.geoContains(
+            feature,
+            [mapUtils.normalizeLon(d.reclong), d.reclat],
+          ));
+          if (match) vis.geoNameMap.set(feature, match.country);
+        });
+      }
+      const hasSelection = !!vis.selectedCountry;
       vis.baseGroup
         .selectAll('path')
         .data(vis.countries)
         .join('path')
         .attr('d', vis.path)
-        .attr('fill', '#f0f0f0')
-        .attr('stroke', '#ccc')
-        .attr('stroke-width', 0.5);
+        .attr('fill', hasSelection ? '#e8e8e8' : '#f0f0f0')
+        .attr('stroke', hasSelection ? '#ddd' : '#ccc')
+        .attr('stroke-width', 0.5)
+        .attr('opacity', hasSelection ? 0.6 : 1)
+        .style('cursor', 'pointer')
+        .on('click', (event, feature) => {
+          event.stopPropagation();
+          const country = vis.geoNameMap.get(feature) || null;
+          if (!country) return;
+          vis.config.onCountrySelect(
+            country === vis.selectedCountry ? null : country,
+          );
+        });
     } else {
       const graticule = d3.geoGraticule10();
       vis.baseGroup
@@ -159,16 +183,7 @@ export default class MassDistributionMap {
       filtered = filtered.filter((d) => d.year != null && d.year <= vis.yearMax);
     }
 
-    // Determine top N classes by count
-    const classCounts = d3.rollup(
-      vis.data.filter(mapUtils.hasValidCoords),
-      (v) => v.length,
-      (d) => d.recclass || 'Unknown',
-    );
-    vis.topClasses = [...classCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, vis.config.topN)
-      .map(([c]) => c);
+    vis.topClasses = getTopRecclasses(vis.data, vis.config.topN, mapUtils.hasValidCoords);
 
     // If selected class is not in top 7, add it with a distinct color
     const extraClass = vis.selectedClass && !vis.topClasses.includes(vis.selectedClass)
@@ -396,6 +411,20 @@ export default class MassDistributionMap {
     this.renderLegend();
   }
 }
+
+  resize(w, h) {
+    const vis = this;
+    vis.config.containerWidth = w;
+    vis.config.containerHeight = h;
+    vis.svgRoot.attr('viewBox', `0 0 ${w} ${h}`);
+    vis.svgRoot.select('text').attr('x', w / 2);
+    vis.svgRoot.select('.zoom-reset').attr('x', w - 10);
+    vis.projection.fitSize([vis.width, vis.height], { type: 'Sphere' });
+    vis.path = d3.geoPath().projection(vis.projection);
+    vis.svgRoot.transition().duration(0).call(vis.zoom.transform, d3.zoomIdentity);
+    vis.renderVis();
+    vis.updateVis();
+  }
 
   update(data) {
     this.data = data;
