@@ -36,6 +36,19 @@ const MapWrapper = {
     if (MapWrapper.barChart) MapWrapper.barChart.setYearRange(min, max);
   },
 
+  resize() {
+    const { mapContainer, barChartContainer } = MapWrapper.containerSelectors || {};
+    if (mapContainer) {
+      const ms = MapWrapper.getContainerSize(mapContainer);
+      if (MapWrapper.densityMap) MapWrapper.densityMap.resize(ms.width, ms.height);
+      if (MapWrapper.pointsMap) MapWrapper.pointsMap.resize(ms.width, ms.height);
+    }
+    if (barChartContainer) {
+      const bs = MapWrapper.getContainerSize(barChartContainer);
+      if (MapWrapper.barChart) MapWrapper.barChart.resize(bs.width);
+    }
+  },
+
   /**
    * Switch between density (Task 3) and points (Task 5) modes.
    * Both SVGs share the same #main-map container; only one is visible at a time.
@@ -55,6 +68,8 @@ const MapWrapper = {
     const {
       mapContainer, barChartContainer, data, onCountrySelectExternal,
     } = config;
+
+    MapWrapper.containerSelectors = { mapContainer, barChartContainer };
 
     const mapSize = MapWrapper.getContainerSize(mapContainer);
     const barSize = MapWrapper.getContainerSize(barChartContainer);

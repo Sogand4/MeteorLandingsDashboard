@@ -340,5 +340,16 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
       boxplotContainer: '#mass-by-class-boxplot',
       data,
     });
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        MapWrapper.resize();
+        Task1.resize();
+        Task2.resize();
+        Task4.resize();
+      }, 200);
+    });
   });
 });
