@@ -603,7 +603,7 @@ body {
 }
 
 #total-meteorite-discoveries-bar-chart-svg .bar {
-  fill: #828282;
+  fill: #929191;
   transition: opacity 150ms ease;
 }
 
@@ -612,8 +612,17 @@ body {
 }
 
 .type-trend-line {
-  stroke: #2f5597;
+  stroke: #060606;
   stroke-width: 2.5;
   fill: none;
   pointer-events: none;
+}
+
+/* Shared colour styling */
+:root {
+  --cat-1: #E69F00;
+  --cat-2: #56B4E9;
+  --cat-3: #009E73;
+  --cat-4: #F0E442;
+  --cat-5: #0072B2;
 }

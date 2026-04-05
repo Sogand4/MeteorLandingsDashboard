@@ -65,11 +65,19 @@ export default class MassByClassBoxPlot {
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickSizeOuter(0);
 
-    const colours = d3.schemeTableau10;
-    vis.colourScale = d3.scaleOrdinal(colours);
+    const styles = getComputedStyle(document.documentElement);
+    const categoricalColors = [
+      styles.getPropertyValue('--cat-1').trim(),
+      styles.getPropertyValue('--cat-2').trim(),
+      styles.getPropertyValue('--cat-3').trim(),
+      styles.getPropertyValue('--cat-4').trim(),
+      styles.getPropertyValue('--cat-5').trim(),
+    ];
+
+    vis.colourScale = d3.scaleOrdinal(categoricalColors);
     // Keep the dropdown-selected class visually consistent by assigning it a
     // static colour, regardless of which recclass is selected
-    const [, , , , dropdowncolour] = colours;
+    const [, , , , dropdowncolour] = categoricalColors;
     vis.dropdowncolour = dropdowncolour;
 
     vis.svg = vis.container
