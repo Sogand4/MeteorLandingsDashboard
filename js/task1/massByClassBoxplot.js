@@ -59,11 +59,15 @@ export default class MassByClassBoxPlot {
     vis.controls
       .append('label')
       .attr('for', 'class-select-compare')
-      .text('5th class:');
+      .text('5th class (by landing count):');
 
     vis.dropdown = vis.controls
       .append('select')
-      .attr('id', 'class-select-compare');
+      .attr('id', 'class-select-compare')
+      .attr(
+        'title',
+        'Classes 5+ are listed by frequency (most landings first). #n = rank among all classes.',
+      );
 
     vis.dropdown
       .selectAll('option')
