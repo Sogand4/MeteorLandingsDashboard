@@ -18,7 +18,7 @@ body {
 
 .dashboard {
   display: grid;
-  grid-template-rows: auto minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-rows: auto minmax(0, 4fr) minmax(0, 2fr);
   grid-template-columns: 1fr;
   height: 100vh;
   max-width: 1920px;
@@ -348,7 +348,7 @@ body {
 }
 
 .sidebar .chart-container:first-child {
-  flex: 1.2;
+  flex: 1;
 }
 
 /* Responsive SVGs – scale to fill containers */
@@ -360,12 +360,12 @@ body {
 }
 
 #task3-country-bar {
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-#task3-country-bar svg {
-  overflow: visible;
-  display: block;
+#task3-country-bar > svg {
+  flex-shrink: 0;
 }
 
 /* Bar chart header (title + toggle + subtitle row) */
@@ -551,6 +551,10 @@ body {
 }
 
 /* Vis 1 - Boxplot */
+
+#mass-by-class-boxplot {
+  margin-top: 0.5rem;
+}
 
 #mass-by-class-boxplot .chart-title {
   text-align: center;
