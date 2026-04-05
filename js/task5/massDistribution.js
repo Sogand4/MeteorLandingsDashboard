@@ -9,6 +9,7 @@
  * - VAD Chapter 5: Marks and channels – area size for quantitative, hue for categorical
  */
 import mapUtils from '../utils/mapUtils.js';
+import { getTopRecclasses } from '../utils/recclassUtils.js';
 
 export default class MassDistributionMap {
   constructor(_config, data) {
@@ -185,16 +186,7 @@ export default class MassDistributionMap {
       filtered = filtered.filter((d) => d.year != null && d.year <= vis.yearMax);
     }
 
-    // Determine top N classes by count
-    const classCounts = d3.rollup(
-      vis.data.filter(mapUtils.hasValidCoords),
-      (v) => v.length,
-      (d) => d.recclass || 'Unknown',
-    );
-    vis.topClasses = [...classCounts.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, vis.config.topN)
-      .map(([c]) => c);
+    vis.topClasses = getTopRecclasses(vis.data, vis.config.topN, mapUtils.hasValidCoords);
 
     // Color scale: categorical hue for top classes + "Other"
     const palette = [

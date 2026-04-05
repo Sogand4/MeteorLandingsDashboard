@@ -30,7 +30,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
     vis.yScale = d3.scaleLinear().range([vis.height, 0]);
 
     vis.xAxis = d3.axisBottom(vis.xScale).tickFormat((d) => `${d}–${d + 9}`).tickSizeOuter(0);
-    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('d')).ticks(5).tickSizeOuter(0);
+    vis.yAxis = d3.axisLeft(vis.yScale).tickFormat(d3.format('~s')).ticks(5).tickSizeOuter(0);
 
     vis.svg = d3
       .select(vis.config.parentElement)
@@ -87,6 +87,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
       .rollups(
         vis.data,
         (group) => group.length,
+        // Group meteorites into decade buckets
         (d) => Math.floor(d.year / 10) * 10,
       )
       .map((d) => ({
@@ -119,6 +120,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
           .classed('is-highlighted', (bar) => bar.year === d.year)
           .classed('is-dimmed', (bar) => bar.year !== d.year);
 
+        // Stacked chart will highlight the same bucket on both charts
         vis.dispatcher.call('hoverTotalMeteoriteBucket', event, d.year);
       })
       .on('mouseout', (event) => {
@@ -149,6 +151,7 @@ export default class TotalMeteoriteDiscoveriesBarChart {
         );
 
         const classCount = bucketRows.filter((row) => {
+          // If category is "Other", count everything that is not one of the named top classes
           if (recclass === 'Other') {
             return !topRecclasses.includes(row.recclass);
           }
@@ -161,6 +164,8 @@ export default class TotalMeteoriteDiscoveriesBarChart {
         };
       });
 
+      // Dim the bars and overlay a line so the selected class trend can be
+      // compared against the total discoveries background
       vis.bars.classed('is-dimmed', true);
       vis.typeTrendLine
         .datum(trendData)
