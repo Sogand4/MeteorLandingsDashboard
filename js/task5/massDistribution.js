@@ -282,6 +282,7 @@ export default class MassDistributionMap {
       })
       .attr('stroke-width', (d) => (vis.highlightedClasses.has(d.displayClass) ? 1 : 0.3))
       .style('cursor', 'pointer')
+      .style('pointer-events', (d) => (vis.highlightedClasses.size === 0 || vis.highlightedClasses.has(d.displayClass) ? 'auto' : 'none'))
       .on('mouseover', (event, d) => {
         if (vis.highlightedClasses.size > 0 && !vis.highlightedClasses.has(d.displayClass)) return;
         vis.tooltip
