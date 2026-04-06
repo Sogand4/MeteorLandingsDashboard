@@ -190,39 +190,47 @@ export default class MassDistributionMap {
       ? vis.selectedClass : null;
 
     const styles = getComputedStyle(document.documentElement);
-const palette = [
-  styles.getPropertyValue('--cat-1').trim(),
-  styles.getPropertyValue('--cat-2').trim(),
-  styles.getPropertyValue('--cat-3').trim(),
-  styles.getPropertyValue('--cat-4').trim(),
-  styles.getPropertyValue('--cat-5').trim(),
-  styles.getPropertyValue('--cat-6').trim(),
-  styles.getPropertyValue('--cat-7').trim(),
-];
+    const palette = [
+      styles.getPropertyValue('--cat-1').trim(),
+      styles.getPropertyValue('--cat-2').trim(),
+      styles.getPropertyValue('--cat-3').trim(),
+      styles.getPropertyValue('--cat-4').trim(),
+      styles.getPropertyValue('--cat-5').trim(),
+      styles.getPropertyValue('--cat-6').trim(),
+      styles.getPropertyValue('--cat-7').trim(),
+    ];
 
-const extraColor = styles.getPropertyValue('--cat-8').trim();
+    const extraColor = styles.getPropertyValue('--cat-8').trim();
 
-const domain = extraClass
-  ? [...vis.topClasses, extraClass, 'Other']
-  : [...vis.topClasses, 'Other'];
+    const domain = extraClass
+      ? [...vis.topClasses, extraClass, 'Other']
+      : [...vis.topClasses, 'Other'];
 
-const range = extraClass
-  ? [...palette.slice(0, vis.topClasses.length), extraColor, '#cccccc']
-  : [...palette.slice(0, vis.topClasses.length), '#cccccc'];
+    const range = extraClass
+      ? [...palette.slice(0, vis.topClasses.length), extraColor, '#cccccc']
+      : [...palette.slice(0, vis.topClasses.length), '#cccccc'];
 
-vis.classColorScale = d3.scaleOrdinal().domain(domain).range(range);
+    vis.classColorScale = d3.scaleOrdinal().domain(domain).range(range);
 
     // Assign display class (topN, extraClass, or "Other")
     vis.filteredData = filtered
       .filter((d) => d.mass != null && d.mass > 0)
-      .map((d) => ({
-        ...d,
-        lon: mapUtils.normalizeLon(d.reclong),
-        lat: d.reclat,
-        displayClass: vis.topClasses.includes(d.recclass)
-          ? d.recclass
-          : (extraClass && d.recclass === extraClass ? extraClass : 'Other'),
-      }));
+      .map((d) => {
+        let displayClass = 'Other';
+
+        if (vis.topClasses.includes(d.recclass)) {
+          displayClass = d.recclass;
+        } else if (extraClass && d.recclass === extraClass) {
+          displayClass = extraClass;
+        }
+
+        return {
+          ...d,
+          lon: mapUtils.normalizeLon(d.reclong),
+          lat: d.reclat,
+          displayClass,
+        };
+      });
 
     // Log scale for radius
     const masses = vis.filteredData.map((d) => d.mass).filter((m) => m > 0);
@@ -409,16 +417,16 @@ vis.classColorScale = d3.scaleOrdinal().domain(domain).range(range);
   }
 
   setSelectedClass(recclass) {
-  this.selectedClass = recclass;
-  this.highlightedClasses.clear();
-  if (recclass) {
-    this.highlightedClasses.add(recclass);
+    this.selectedClass = recclass;
+    this.highlightedClasses.clear();
+    if (recclass) {
+      this.highlightedClasses.add(recclass);
+    }
+    if (this.filteredData) {
+      this.renderPoints();
+      this.renderLegend();
+    }
   }
-  if (this.filteredData) {
-    this.renderPoints();
-    this.renderLegend();
-  }
-}
 
   resize(w, h) {
     const vis = this;
