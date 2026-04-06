@@ -9,12 +9,27 @@
 import Task3CountryLandingsBarChart from './countryLandingsBarChart.js';
 import Task3Map from './task3Map.js';
 import MassDistributionMap from '../task5/massDistribution.js';
+import mapUtils from '../utils/mapUtils.js';
 
 const MapWrapper = {
   densityMap: null,
   pointsMap: null,
   barChart: null,
   currentMode: 'density', // "density" | "points"
+
+  /**
+   * Indeterminate loading bar over #main-map (see index.html #map-loading).
+   * @param {boolean} show
+   * @param {string} [message]
+   */
+  setMapLoading(show, message = 'Loading map…') {
+    const root = document.getElementById('map-loading');
+    const label = root?.querySelector('.map-loading-text');
+    if (!root) return;
+    if (label && message) label.textContent = message;
+    root.hidden = !show;
+    root.setAttribute('aria-busy', show ? 'true' : 'false');
+  },
 
   getContainerSize(selector) {
     const el = document.querySelector(selector);
@@ -52,27 +67,43 @@ const MapWrapper = {
   /**
    * Switch between density (Task 3) and points (Task 5) modes.
    * Both SVGs share the same #main-map container; only one is visible at a time.
+   * Points map DOM and heavy rendering are deferred until the first time mode is "points".
    */
-  setMode(mode) {
+  async setMode(mode) {
     MapWrapper.currentMode = mode;
     if (mode === 'density') {
       MapWrapper.densityMap?.show();
       MapWrapper.pointsMap?.hide();
     } else {
       MapWrapper.densityMap?.hide();
-      MapWrapper.pointsMap?.show();
+      if (MapWrapper.pointsMap) {
+        const needsPointsBuild = !MapWrapper.pointsMap.isReady();
+        if (needsPointsBuild) {
+          MapWrapper.setMapLoading(true, 'Loading points view…');
+        }
+        try {
+          await MapWrapper.pointsMap.ensureRendered(MapWrapper.worldCountries);
+        } finally {
+          if (needsPointsBuild) MapWrapper.setMapLoading(false);
+        }
+        MapWrapper.pointsMap.show();
+      }
     }
   },
 
-  init(config) {
+  async init(config) {
     const {
       mapContainer, barChartContainer, data, onCountrySelectExternal,
     } = config;
 
     MapWrapper.containerSelectors = { mapContainer, barChartContainer };
 
+    MapWrapper.setMapLoading(true, 'Loading map…');
+    try {
     const mapSize = MapWrapper.getContainerSize(mapContainer);
     const barSize = MapWrapper.getContainerSize(barChartContainer);
+
+    const worldMapPromise = mapUtils.loadWorldMap();
 
     const onCountrySelect = (country) => {
       const c = country || null;
@@ -98,6 +129,8 @@ const MapWrapper = {
     MapWrapper.barChart.updateVis();
     MapWrapper.barChart.renderVis();
 
+    MapWrapper.worldCountries = await worldMapPromise;
+
     MapWrapper.densityMap = new Task3Map(
       {
         parentElement: mapContainer,
@@ -119,17 +152,18 @@ const MapWrapper = {
       data,
     );
 
-    // Wire toggle radios
     document.querySelectorAll("input[name='map-mode']").forEach((radio) => {
-      radio.addEventListener('click', (e) => {
-        MapWrapper.setMode(e.target.value);
+      radio.addEventListener('change', (e) => {
+        void MapWrapper.setMode(e.target.value);
       });
     });
 
-    return MapWrapper.densityMap.render().then(() => MapWrapper.pointsMap.render().then(() => {
-      MapWrapper.pointsMap.hide(); // density is default
-      return MapWrapper;
-    }));
+    await MapWrapper.densityMap.render(MapWrapper.worldCountries);
+    void MapWrapper.setMode('density');
+    return MapWrapper;
+    } finally {
+      MapWrapper.setMapLoading(false);
+    }
   },
 };
 

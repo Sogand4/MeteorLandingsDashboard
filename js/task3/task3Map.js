@@ -9,6 +9,9 @@
  */
 import mapUtils from '../utils/mapUtils.js';
 
+/** Hex colors and legend use the same discrete steps on log10(1 + count). */
+const DENSITY_LEGEND_BINS = 5;
+
 export default class Task3Map {
   constructor(_config, data) {
     this.config = {
@@ -166,12 +169,41 @@ export default class Task3Map {
     const rawMax = d3.max(vis.bins, (b) => b.length);
     vis.minCount = Number.isFinite(rawMin) ? rawMin : 0;
     vis.maxCount = Number.isFinite(rawMax) ? Math.max(rawMax, vis.minCount, 1) : 1;
+    /* True when every non-empty hex has the same count (e.g. heavy filtering). */
+    vis.densityUniform = vis.minCount === vis.maxCount;
+
     /* Log10(1+x) color scale reduces skew from hotspots */
     vis.logMin = Math.log10(1 + Math.max(0, vis.minCount));
     vis.logMax = Math.log10(1 + Math.max(vis.maxCount, 1));
-    if (vis.logMax <= vis.logMin) vis.logMax = vis.logMin + 1e-9;
-    vis.colorScale = d3.scaleSequential(d3.interpolateYlOrRd).domain([vis.logMin, vis.logMax]);
-    vis.legendSteps = Math.min(5, Math.max(0, Math.round(vis.maxCount - vis.minCount)));
+    if (!vis.densityUniform && vis.logMax <= vis.logMin) {
+      vis.logMax = vis.logMin + 1e-9;
+    }
+
+    const scaleDomainHi = vis.densityUniform ? vis.logMin + 1e-9 : vis.logMax;
+    vis.colorScale = d3
+      .scaleSequential(d3.interpolateYlOrRd)
+      .domain([vis.logMin, scaleDomainHi]);
+
+    const logSpan = vis.logMax - vis.logMin;
+
+    if (vis.densityUniform || logSpan <= 1e-12) {
+      vis.densityBinColors = [vis.colorScale(vis.logMin)];
+      vis.densityBinIndex = () => 0;
+    } else {
+      vis.densityBinColors = d3.range(DENSITY_LEGEND_BINS).map((i) => {
+        const t0 = vis.logMin + (i / DENSITY_LEGEND_BINS) * logSpan;
+        const t1 = vis.logMin + ((i + 1) / DENSITY_LEGEND_BINS) * logSpan;
+        return vis.colorScale((t0 + t1) / 2);
+      });
+      vis.densityBinIndex = (logVal) => {
+        const span = vis.logMax - vis.logMin;
+        const u = (logVal - vis.logMin) / span;
+        return Math.min(
+          DENSITY_LEGEND_BINS - 1,
+          Math.max(0, Math.floor(u * DENSITY_LEGEND_BINS)),
+        );
+      };
+    }
   }
 
   renderVis() {
@@ -231,7 +263,10 @@ export default class Task3Map {
       .join('path')
       .attr('d', vis.hexbin.hexagon())
       .attr('transform', (d) => `translate(${d.x},${d.y})`)
-      .attr('fill', (d) => vis.colorScale(Math.log10(1 + d.length)))
+      .attr('fill', (d) => {
+        const logVal = Math.log10(1 + d.length);
+        return vis.densityBinColors[vis.densityBinIndex(logVal)];
+      })
       .attr('stroke', '#fff')
       .attr('stroke-width', 0.5)
       .attr('opacity', 0.85);
@@ -314,27 +349,74 @@ export default class Task3Map {
     vis.renderLegend();
   }
 
-  async render() {
+  /**
+   * @param {object[]|null} [preloadedCountries] – from mapUtils.loadWorldMap(); avoids a second fetch when Task 5 shares the same data.
+   */
+  async render(preloadedCountries = null) {
     this.initVis();
-    await this.loadWorldMap();
+    this.countries = preloadedCountries != null
+      ? preloadedCountries
+      : await this.loadWorldMap();
     this.updateVis();
     this.renderVis();
   }
 
+  /**
+   * Legend swatch colors are identical to hex fills: both use the same log10(1+count) axis
+   * split into DENSITY_LEGEND_BINS discrete steps (not a smooth gradient).
+   */
   renderLegend() {
     const vis = this;
     const safeMin = Number.isFinite(vis.minCount) ? vis.minCount : 0;
     const safeMax = Number.isFinite(vis.maxCount) ? Math.max(vis.maxCount, safeMin, 1) : 1;
-    const steps = Math.min(5, Math.max(0, Math.round(safeMax - safeMin)));
     const logLo = vis.logMin;
     const logHi = vis.logMax;
+    const logSpan = logHi - logLo;
     const barWidth = 20;
     const barHeight = 18;
     const labelOffset = 28;
 
     const fmt = (n) => (Number.isFinite(n) ? d3.format(',')(Math.round(n)) : '0');
 
-    const legendHeight = 25 + (steps + 1) * barHeight;
+    /** Map log value to count k = 10^L - 1 (inverse of L = log10(1+k)). */
+    const countAtLog = (L) => 10 ** L - 1;
+
+    /**
+     * Integers k with log10(1+k) in [t0, t1) — same rule as partitioning the color axis.
+     */
+    const countRangeForLogSlice = (t0, t1) => {
+      const kMin = Math.max(0, Math.ceil(countAtLog(t0) - 1e-9));
+      const kMax = Math.floor(countAtLog(t1) - 1e-9);
+      return { kMin, kMax };
+    };
+
+    const rows = [];
+    if (vis.densityUniform || logSpan <= 1e-12) {
+      rows.push({
+        t0: logLo,
+        t1: logHi,
+        label: safeMin === safeMax ? fmt(safeMin) : `${fmt(safeMin)}–${fmt(safeMax)}`,
+      });
+    } else {
+      for (let i = 0; i < DENSITY_LEGEND_BINS; i++) {
+        const t0 = logLo + (i / DENSITY_LEGEND_BINS) * logSpan;
+        const t1 = logLo + ((i + 1) / DENSITY_LEGEND_BINS) * logSpan;
+        const { kMin, kMax } = countRangeForLogSlice(t0, t1);
+        let label;
+        if (kMax < kMin) {
+          const mid = (t0 + t1) / 2;
+          const approx = Math.max(0, Math.round(countAtLog(mid)));
+          label = fmt(approx);
+        } else if (kMin === kMax) {
+          label = fmt(kMin);
+        } else {
+          label = `${fmt(kMin)}–${fmt(kMax)}`;
+        }
+        rows.push({ t0, t1, label });
+      }
+    }
+
+    const legendHeight = 25 + rows.length * barHeight;
     const legend = vis.legendGroup
       .append('g')
       .attr('class', 'legend')
@@ -357,21 +439,17 @@ export default class Task3Map {
       .attr('y', 8)
       .attr('font-size', 9)
       .attr('fill', '#666')
-      .text('(count per hexbin, log color scale)');
+      .text(
+        rows.length <= 1
+          ? '(count per hexbin, log scale)'
+          : `(count per hexbin, log scale · ${DENSITY_LEGEND_BINS} discrete colors)`,
+      );
 
-    for (let i = 0; i <= steps; i++) {
-      const logA = steps === 0
-        ? logLo
-        : logLo + (i / steps) * (logHi - logLo);
-      let logB = logHi;
-      if (steps > 0 && i < steps) {
-        logB = logLo + ((i + 1) / steps) * (logHi - logLo);
-      }
-      const countLo = Math.max(0, Math.floor(10 ** logA - 1));
-      const countHi = Math.max(countLo, Math.ceil(10 ** logB - 1));
-      const label = `${fmt(countLo)}–${fmt(countHi)}`;
-      const logMid = (logA + logB) / 2;
+    rows.forEach((row, i) => {
       const y = 18 + i * barHeight;
+      const fill = vis.densityBinColors && vis.densityBinColors[i] != null
+        ? vis.densityBinColors[i]
+        : vis.colorScale((row.t0 + row.t1) / 2);
 
       legend
         .append('rect')
@@ -379,7 +457,7 @@ export default class Task3Map {
         .attr('y', y)
         .attr('width', barWidth)
         .attr('height', barHeight - 2)
-        .attr('fill', vis.colorScale(logMid));
+        .attr('fill', fill);
 
       legend
         .append('text')
@@ -388,8 +466,8 @@ export default class Task3Map {
         .attr('font-size', 10)
         .attr('fill', '#333')
         .attr('dominant-baseline', 'middle')
-        .text(label);
-    }
+        .text(row.label);
+    });
   }
 
   setSelectedCountry(country) {
