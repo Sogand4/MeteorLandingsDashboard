@@ -310,6 +310,6 @@ export default class MassByClassBoxPlot {
       .attr('class', 'axis-label')
       .attr('x', vis.width / 2)
       .attr('y', 35)
-      .text('Meteorite Class');
+      .text('Meteorite Class (most to least frequent)');
   }
 }
