@@ -360,7 +360,7 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
         if (yearMax) yearMax.value = '';
         if (countryFilterRef) countryFilterRef.setValue('');
         document.getElementById('map-mode-density').checked = true;
-        void MapWrapper.setMode('density');
+        MapWrapper.setMode('density').catch(() => {});
         MapWrapper.setSelectedClass(null);
         MapWrapper.setYearRange(null, null);
         applyCountryFilter(null);
@@ -385,7 +385,7 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
       );
       if (modeRadio) {
         modeRadio.checked = true;
-        void MapWrapper.setMode(snap.mapMode || 'density');
+        MapWrapper.setMode(snap.mapMode || 'density').catch(() => {});
       }
 
       const minVal = snap.yearMin !== '' ? +snap.yearMin : null;

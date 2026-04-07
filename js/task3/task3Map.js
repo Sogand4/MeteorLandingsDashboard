@@ -350,7 +350,8 @@ export default class Task3Map {
   }
 
   /**
-   * @param {object[]|null} [preloadedCountries] – from mapUtils.loadWorldMap(); avoids a second fetch when Task 5 shares the same data.
+   * @param {object[]|null} [preloadedCountries] – preloaded country features from
+   *   mapUtils.loadWorldMap(); avoids a second fetch when Task 5 shares the same data.
    */
   async render(preloadedCountries = null) {
     this.initVis();

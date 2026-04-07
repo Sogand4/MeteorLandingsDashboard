@@ -100,67 +100,67 @@ const MapWrapper = {
 
     MapWrapper.setMapLoading(true, 'Loading map…');
     try {
-    const mapSize = MapWrapper.getContainerSize(mapContainer);
-    const barSize = MapWrapper.getContainerSize(barChartContainer);
+      const mapSize = MapWrapper.getContainerSize(mapContainer);
+      const barSize = MapWrapper.getContainerSize(barChartContainer);
 
-    const worldMapPromise = mapUtils.loadWorldMap();
+      const worldMapPromise = mapUtils.loadWorldMap();
 
-    const onCountrySelect = (country) => {
-      const c = country || null;
-      if (MapWrapper.densityMap) MapWrapper.densityMap.setSelectedCountry(c);
-      if (MapWrapper.pointsMap) MapWrapper.pointsMap.setSelectedCountry(c);
-      if (MapWrapper.barChart) MapWrapper.barChart.setSelectedCountry(c);
-      if (onCountrySelectExternal) onCountrySelectExternal(c);
-      MapWrapper.densityMap?.update(data);
-      MapWrapper.pointsMap?.update(data);
-      MapWrapper.barChart?.update(data);
-    };
+      const onCountrySelect = (country) => {
+        const c = country || null;
+        if (MapWrapper.densityMap) MapWrapper.densityMap.setSelectedCountry(c);
+        if (MapWrapper.pointsMap) MapWrapper.pointsMap.setSelectedCountry(c);
+        if (MapWrapper.barChart) MapWrapper.barChart.setSelectedCountry(c);
+        if (onCountrySelectExternal) onCountrySelectExternal(c);
+        MapWrapper.densityMap?.update(data);
+        MapWrapper.pointsMap?.update(data);
+        MapWrapper.barChart?.update(data);
+      };
 
-    MapWrapper.barChart = new Task3CountryLandingsBarChart(
-      {
-        parentElement: barChartContainer,
-        containerWidth: barSize.width,
-        containerHeight: barSize.height,
-        onCountrySelect,
-      },
-      data,
-    );
-    MapWrapper.barChart.initVis();
-    MapWrapper.barChart.updateVis();
-    MapWrapper.barChart.renderVis();
+      MapWrapper.barChart = new Task3CountryLandingsBarChart(
+        {
+          parentElement: barChartContainer,
+          containerWidth: barSize.width,
+          containerHeight: barSize.height,
+          onCountrySelect,
+        },
+        data,
+      );
+      MapWrapper.barChart.initVis();
+      MapWrapper.barChart.updateVis();
+      MapWrapper.barChart.renderVis();
 
-    MapWrapper.worldCountries = await worldMapPromise;
+      MapWrapper.worldCountries = await worldMapPromise;
 
-    MapWrapper.densityMap = new Task3Map(
-      {
-        parentElement: mapContainer,
-        containerWidth: mapSize.width,
-        containerHeight: mapSize.height,
-        hexRadius: Math.max(1.5, mapSize.width / 240),
-        onCountrySelect,
-      },
-      data,
-    );
+      MapWrapper.densityMap = new Task3Map(
+        {
+          parentElement: mapContainer,
+          containerWidth: mapSize.width,
+          containerHeight: mapSize.height,
+          hexRadius: Math.max(1.5, mapSize.width / 240),
+          onCountrySelect,
+        },
+        data,
+      );
 
-    MapWrapper.pointsMap = new MassDistributionMap(
-      {
-        parentElement: mapContainer,
-        containerWidth: mapSize.width,
-        containerHeight: mapSize.height,
-        onCountrySelect,
-      },
-      data,
-    );
+      MapWrapper.pointsMap = new MassDistributionMap(
+        {
+          parentElement: mapContainer,
+          containerWidth: mapSize.width,
+          containerHeight: mapSize.height,
+          onCountrySelect,
+        },
+        data,
+      );
 
-    document.querySelectorAll("input[name='map-mode']").forEach((radio) => {
-      radio.addEventListener('change', (e) => {
-        void MapWrapper.setMode(e.target.value);
+      document.querySelectorAll("input[name='map-mode']").forEach((radio) => {
+        radio.addEventListener('change', (e) => {
+          MapWrapper.setMode(e.target.value).catch(() => {});
+        });
       });
-    });
 
-    await MapWrapper.densityMap.render(MapWrapper.worldCountries);
-    void MapWrapper.setMode('density');
-    return MapWrapper;
+      await MapWrapper.densityMap.render(MapWrapper.worldCountries);
+      MapWrapper.setMode('density').catch(() => {});
+      return MapWrapper;
     } finally {
       MapWrapper.setMapLoading(false);
     }

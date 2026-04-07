@@ -35,9 +35,9 @@ export default class MassDistributionMap {
     this.classColorScale = null;
     this.topClasses = [];
     /** True after initVis + first renderVis/updateVis (lazy until Points mode is selected). */
-    this._ready = false;
-    /** In-flight ensureRendered; coalesces concurrent callers (preload + first switch). */
-    this._ensurePromise = null;
+    this.pointsLayerReady = false;
+    /** In-flight ensureRendered; coalesces concurrent callers. */
+    this.ensureRenderedPromise = null;
   }
 
   get width() {
@@ -77,7 +77,7 @@ export default class MassDistributionMap {
 
     vis.svgRoot.on('click', () => {
       vis.highlightedClasses.clear();
-      void vis.updateVis();
+      vis.updateVis().catch(() => {});
     });
 
     // Tooltip
@@ -263,7 +263,7 @@ export default class MassDistributionMap {
   /**
    * Bind circle geometry + interactions (used for full render and rAF chunks).
    */
-  _bindPointCircles(circleSel) {
+  bindPointCircles(circleSel) {
     const vis = this;
     return circleSel
       .attr('cx', (d) => d.px)
@@ -305,7 +305,7 @@ export default class MassDistributionMap {
         } else {
           vis.highlightedClasses.add(d.displayClass);
         }
-        void vis.updateVis();
+        vis.updateVis().catch(() => {});
       });
   }
 
@@ -319,14 +319,14 @@ export default class MassDistributionMap {
       })
       .filter(Boolean);
 
-    vis._pointsRenderGen = (vis._pointsRenderGen || 0) + 1;
-    const gen = vis._pointsRenderGen;
+    vis.pointsRenderGen = (vis.pointsRenderGen || 0) + 1;
+    const gen = vis.pointsRenderGen;
 
     vis.pointsGroup.selectAll('circle').remove();
 
     const chunkSize = 7000;
     if (projected.length <= chunkSize) {
-      vis._bindPointCircles(
+      vis.bindPointCircles(
         vis.pointsGroup
           .selectAll('circle')
           .data(projected, (d) => d.id)
@@ -338,12 +338,12 @@ export default class MassDistributionMap {
     return new Promise((resolve) => {
       let offset = 0;
       const paintChunk = () => {
-        if (gen !== vis._pointsRenderGen) {
+        if (gen !== vis.pointsRenderGen) {
           resolve();
           return;
         }
         const slice = projected.slice(offset, offset + chunkSize);
-        vis._bindPointCircles(
+        vis.bindPointCircles(
           vis.pointsGroup
             .selectAll(`circle.pt-${offset}`)
             .data(slice, (d) => d.id)
@@ -404,7 +404,7 @@ export default class MassDistributionMap {
           } else {
             vis.highlightedClasses.add(cls);
           }
-          void vis.updateVis();
+          vis.updateVis().catch(() => {});
         });
 
       row.append('circle')
@@ -468,7 +468,7 @@ export default class MassDistributionMap {
       this.highlightedClasses.add(recclass);
     }
     if (this.filteredData) {
-      void this.updateVis();
+      this.updateVis().catch(() => {});
     }
   }
 
@@ -476,7 +476,7 @@ export default class MassDistributionMap {
     const vis = this;
     vis.config.containerWidth = w;
     vis.config.containerHeight = h;
-    if (!vis._ready) return;
+    if (!vis.pointsLayerReady) return;
     vis.svgRoot.attr('viewBox', `0 0 ${w} ${h}`);
     vis.svgRoot.select('text').attr('x', w / 2);
     vis.svgRoot.select('.zoom-reset').attr('x', w - 10);
@@ -484,12 +484,14 @@ export default class MassDistributionMap {
     vis.path = d3.geoPath().projection(vis.projection);
     vis.svgRoot.transition().duration(0).call(vis.zoom.transform, d3.zoomIdentity);
     vis.renderVis();
-    void vis.updateVis();
+    vis.updateVis().catch(() => {});
   }
 
   update(data) {
     this.data = data;
-    if (this._ready) void this.updateVis();
+    if (this.pointsLayerReady) {
+      this.updateVis().catch(() => {});
+    }
   }
 
   show() {
@@ -501,23 +503,23 @@ export default class MassDistributionMap {
   }
 
   isReady() {
-    return this._ready;
+    return this.pointsLayerReady;
   }
 
   /**
-   * Build DOM and draw points/legend. Call once, with countries from a shared preload when possible.
-   * Concurrent calls share the same in-flight work (preload + first open).
+   * Build DOM and draw points/legend once. Optional shared countries GeoJSON.
+   * Concurrent calls share the same in-flight promise.
    * @param {object[]|null} [preloadedCountries]
    */
   async ensureRendered(preloadedCountries = null) {
     const vis = this;
-    if (vis._ready) return;
-    if (vis._ensurePromise) {
-      await vis._ensurePromise;
+    if (vis.pointsLayerReady) return;
+    if (vis.ensureRenderedPromise) {
+      await vis.ensureRenderedPromise;
       return;
     }
 
-    vis._ensurePromise = (async () => {
+    vis.ensureRenderedPromise = (async () => {
       vis.countries = preloadedCountries != null
         ? preloadedCountries
         : await vis.loadWorldMap();
@@ -525,13 +527,13 @@ export default class MassDistributionMap {
       vis.initVis();
       vis.renderVis();
       await vis.updateVis();
-      vis._ready = true;
+      vis.pointsLayerReady = true;
     })();
 
     try {
-      await vis._ensurePromise;
+      await vis.ensureRenderedPromise;
     } finally {
-      vis._ensurePromise = null;
+      vis.ensureRenderedPromise = null;
     }
   }
 
