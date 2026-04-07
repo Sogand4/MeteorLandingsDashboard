@@ -97,17 +97,88 @@ function initCountrySearchFilter(data, onSelect) {
   };
 }
 
-function populateClassFilter(data) {
+function initClassSearchFilter(data, onSelect) {
   const classes = [...new Set(data.map((d) => d.recclass).filter(Boolean))].sort();
-  const select = document.getElementById('filter-class');
-  if (!select) return;
-  select.innerHTML = '<option value="">All classes</option>';
-  classes.forEach((c) => {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    select.appendChild(opt);
+  const input = document.getElementById('filter-class-search');
+  const list = document.getElementById('filter-class-list');
+  if (!input || !list) return { setValue: () => {}, getValue: () => '' };
+
+  function setExpanded(open) {
+    input.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function filterAndShow(query) {
+    const q = (query || '').trim().toLowerCase();
+    const filtered = q
+      ? classes.filter((c) => c.toLowerCase().includes(q))
+      : classes;
+    list.innerHTML = '';
+    const clearLi = document.createElement('li');
+    clearLi.className = 'country-clear';
+    clearLi.setAttribute('role', 'option');
+    clearLi.textContent = 'All classes';
+    clearLi.dataset.value = '';
+    clearLi.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      input.value = '';
+      list.setAttribute('aria-hidden', 'true');
+      setExpanded(false);
+      onSelect(null);
+    });
+    list.appendChild(clearLi);
+    filtered.slice(0, 50).forEach((c) => {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.textContent = c;
+      li.dataset.value = c;
+      li.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        input.value = c;
+        list.setAttribute('aria-hidden', 'true');
+        setExpanded(false);
+        onSelect(c);
+      });
+      list.appendChild(li);
+    });
+    if (filtered.length > 50) {
+      const more = document.createElement('li');
+      more.className = 'country-clear';
+      more.textContent = `… ${filtered.length - 50} more (keep typing)`;
+      list.appendChild(more);
+    }
+    if (q && filtered.length === 0) {
+      const none = document.createElement('li');
+      none.className = 'country-clear';
+      none.textContent = 'No matching classes';
+      list.appendChild(none);
+    }
+    list.setAttribute('aria-hidden', 'false');
+    setExpanded(true);
+  }
+
+  input.addEventListener('focus', () => filterAndShow(input.value));
+  input.addEventListener('input', () => filterAndShow(input.value));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      list.setAttribute('aria-hidden', 'true');
+      setExpanded(false);
+      input.blur();
+    }
   });
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !list.contains(e.target)) {
+      list.setAttribute('aria-hidden', 'true');
+      setExpanded(false);
+    }
+  });
+
+  return {
+    setValue: (recclass) => {
+      input.value = recclass || '';
+    },
+    getValue: () => input.value || '',
+  };
 }
 
 const HISTORY_KEY = 'meteorite-filter-history';
@@ -130,7 +201,7 @@ const FilterHistory = {
 
   capture() {
     const snap = {
-      recclass: document.getElementById('filter-class')?.value || '',
+      recclass: document.getElementById('filter-class-search')?.value || '',
       yearMin: document.getElementById('filter-year-min')?.value || '',
       yearMax: document.getElementById('filter-year-max')?.value || '',
       country: document.getElementById('filter-country-search')?.value || '',
@@ -231,9 +302,14 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
   const data = raw.map(parseMeteoriteRow)
     .filter((d) => d.year == null || (d.year >= 1900 && d.year <= currentYear));
 
-  populateClassFilter(data);
-
   let countryFilterRef = null;
+  let classFilterRef = null;
+
+  classFilterRef = initClassSearchFilter(data, (recclass) => {
+    MapWrapper.setSelectedClass(recclass || null);
+    MapWrapper.densityMap?.update(data);
+    MapWrapper.pointsMap?.update(data);
+  });
 
   const applyCountryFilter = (country) => {
     if (MapWrapper.barChart) MapWrapper.barChart.setSelectedCountry(country);
@@ -249,16 +325,6 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
   };
 
   countryFilterRef = initCountrySearchFilter(data, applyCountryFilter);
-
-  const filterClass = document.getElementById('filter-class');
-  if (filterClass) {
-    filterClass.addEventListener('change', () => {
-      const recclass = filterClass.value || null;
-      MapWrapper.setSelectedClass(recclass);
-      MapWrapper.densityMap?.update(data);
-      MapWrapper.pointsMap?.update(data);
-    });
-  }
 
   const applyYearFilter = () => {
     const minEl = document.getElementById('filter-year-min');
@@ -287,14 +353,14 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
     const clearBtn = document.getElementById('filter-clear-btn');
     if (clearBtn) {
       clearBtn.addEventListener('click', () => {
-        if (filterClass) filterClass.value = '';
+        if (classFilterRef) classFilterRef.setValue('');
         const yearMin = document.getElementById('filter-year-min');
         const yearMax = document.getElementById('filter-year-max');
         if (yearMin) yearMin.value = '';
         if (yearMax) yearMax.value = '';
         if (countryFilterRef) countryFilterRef.setValue('');
         document.getElementById('map-mode-density').checked = true;
-        MapWrapper.setMode('density');
+        MapWrapper.setMode('density').catch(() => {});
         MapWrapper.setSelectedClass(null);
         MapWrapper.setYearRange(null, null);
         applyCountryFilter(null);
@@ -307,7 +373,7 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
     }
 
     FilterHistory.init((snap) => {
-      if (filterClass) filterClass.value = snap.recclass;
+      if (classFilterRef) classFilterRef.setValue(snap.recclass || '');
       const yearMin = document.getElementById('filter-year-min');
       const yearMax = document.getElementById('filter-year-max');
       if (yearMin) yearMin.value = snap.yearMin;
@@ -319,7 +385,7 @@ d3.csv('data/meteorite_clean_no_zero_coords.csv').then((raw) => {
       );
       if (modeRadio) {
         modeRadio.checked = true;
-        MapWrapper.setMode(snap.mapMode);
+        MapWrapper.setMode(snap.mapMode || 'density').catch(() => {});
       }
 
       const minVal = snap.yearMin !== '' ? +snap.yearMin : null;

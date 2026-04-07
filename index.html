@@ -11,11 +11,25 @@
     <div class="dashboard">
       <!-- Filters (compact row) -->
       <header class="filter-bar">
-        <label>
+        <label class="class-filter-wrapper">
           Class
-          <select id="filter-class" class="filter-select">
-            <option value="">All classes</option>
-          </select>
+          <div class="country-search-wrap">
+            <input
+              type="text"
+              id="filter-class-search"
+              placeholder="Search or select…"
+              autocomplete="off"
+              aria-label="Filter by meteorite class"
+              aria-controls="filter-class-list"
+              aria-expanded="false"
+            />
+            <ul
+              id="filter-class-list"
+              class="country-dropdown"
+              role="listbox"
+              aria-hidden="true"
+            ></ul>
+          </div>
         </label>
         <label>
           Year range
@@ -90,7 +104,20 @@
       <!-- Main content: map + sidebar -->
       <main class="main-content">
         <section class="map-container">
-          <div id="main-map" class="map-view"></div>
+          <div id="main-map" class="map-view">
+            <div
+              id="map-loading"
+              class="map-loading"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <div class="map-loading-track" aria-hidden="true">
+                <div class="map-loading-bar"></div>
+              </div>
+              <p class="map-loading-text">Loading map…</p>
+            </div>
+          </div>
         </section>
         <aside class="sidebar">
           <div id="task3-country-bar" class="chart-container"></div>

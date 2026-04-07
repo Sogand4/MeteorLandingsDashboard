@@ -34,6 +34,10 @@ export default class MassDistributionMap {
     this.tooltip = null;
     this.classColorScale = null;
     this.topClasses = [];
+    /** True after initVis + first renderVis/updateVis (lazy until Points mode is selected). */
+    this.pointsLayerReady = false;
+    /** In-flight ensureRendered; coalesces concurrent callers. */
+    this.ensureRenderedPromise = null;
   }
 
   get width() {
@@ -73,8 +77,7 @@ export default class MassDistributionMap {
 
     vis.svgRoot.on('click', () => {
       vis.highlightedClasses.clear();
-      vis.renderPoints();
-      vis.renderLegend();
+      vis.updateVis().catch(() => {});
     });
 
     // Tooltip
@@ -127,12 +130,19 @@ export default class MassDistributionMap {
       if (!vis.geoNameMap) {
         vis.geoNameMap = new Map();
         const pts = vis.data.filter(mapUtils.hasValidCoords);
-        vis.countries.forEach((feature) => {
-          const match = pts.find((d) => d3.geoContains(
-            feature,
-            [mapUtils.normalizeLon(d.reclong), d.reclat],
-          ));
-          if (match) vis.geoNameMap.set(feature, match.country);
+        const byCountry = d3.group(pts, (d) => d.country);
+        byCountry.forEach((rows, countryName) => {
+          if (countryName == null || String(countryName).trim() === '') return;
+          const sample = rows[0];
+          const lon = mapUtils.normalizeLon(sample.reclong);
+          const lat = sample.reclat;
+          for (let fi = 0; fi < vis.countries.length; fi++) {
+            const feature = vis.countries[fi];
+            if (d3.geoContains(feature, [lon, lat])) {
+              vis.geoNameMap.set(feature, countryName);
+              break;
+            }
+          }
         });
       }
       const hasSelection = !!vis.selectedCountry;
@@ -243,34 +253,19 @@ export default class MassDistributionMap {
       .clamp(true);
   }
 
-  updateVis() {
+  async updateVis() {
     const vis = this;
     vis.wrangleData();
-    vis.renderPoints();
+    await Promise.resolve(vis.renderPoints());
     vis.renderLegend();
   }
 
-  renderPoints() {
+  /**
+   * Bind circle geometry + interactions (used for full render and rAF chunks).
+   */
+  bindPointCircles(circleSel) {
     const vis = this;
-
-    // Project coordinates
-    const projected = vis.filteredData
-      .map((d) => {
-        const p = vis.projection([d.lon, d.lat]);
-        return p ? { ...d, px: p[0], py: p[1] } : null;
-      })
-      .filter(Boolean);
-
-    const circles = vis.pointsGroup
-      .selectAll('circle')
-      .data(projected, (d) => d.id);
-
-    circles
-      .join(
-        (enter) => enter.append('circle'),
-        (update) => update,
-        (exit) => exit.remove(),
-      )
+    return circleSel
       .attr('cx', (d) => d.px)
       .attr('cy', (d) => d.py)
       .attr('r', (d) => vis.radiusScale(Math.log10(d.mass)))
@@ -311,9 +306,60 @@ export default class MassDistributionMap {
         } else {
           vis.highlightedClasses.add(d.displayClass);
         }
-        vis.renderPoints();
-        vis.renderLegend();
+        vis.updateVis().catch(() => {});
       });
+  }
+
+  renderPoints() {
+    const vis = this;
+
+    const projected = vis.filteredData
+      .map((d) => {
+        const p = vis.projection([d.lon, d.lat]);
+        return p ? { ...d, px: p[0], py: p[1] } : null;
+      })
+      .filter(Boolean);
+
+    vis.pointsRenderGen = (vis.pointsRenderGen || 0) + 1;
+    const gen = vis.pointsRenderGen;
+
+    vis.pointsGroup.selectAll('circle').remove();
+
+    const chunkSize = 7000;
+    if (projected.length <= chunkSize) {
+      vis.bindPointCircles(
+        vis.pointsGroup
+          .selectAll('circle')
+          .data(projected, (d) => d.id)
+          .join('circle'),
+      );
+      return undefined;
+    }
+
+    return new Promise((resolve) => {
+      let offset = 0;
+      const paintChunk = () => {
+        if (gen !== vis.pointsRenderGen) {
+          resolve();
+          return;
+        }
+        const slice = projected.slice(offset, offset + chunkSize);
+        vis.bindPointCircles(
+          vis.pointsGroup
+            .selectAll(`circle.pt-${offset}`)
+            .data(slice, (d) => d.id)
+            .join('circle')
+            .attr('class', `pt-${offset}`),
+        );
+        offset += chunkSize;
+        if (offset < projected.length) {
+          requestAnimationFrame(paintChunk);
+        } else {
+          resolve();
+        }
+      };
+      paintChunk();
+    });
   }
 
   renderLegend() {
@@ -359,8 +405,7 @@ export default class MassDistributionMap {
           } else {
             vis.highlightedClasses.add(cls);
           }
-          vis.renderPoints();
-          vis.renderLegend();
+          vis.updateVis().catch(() => {});
         });
 
       row.append('circle')
@@ -424,8 +469,7 @@ export default class MassDistributionMap {
       this.highlightedClasses.add(recclass);
     }
     if (this.filteredData) {
-      this.renderPoints();
-      this.renderLegend();
+      this.updateVis().catch(() => {});
     }
   }
 
@@ -433,6 +477,7 @@ export default class MassDistributionMap {
     const vis = this;
     vis.config.containerWidth = w;
     vis.config.containerHeight = h;
+    if (!vis.pointsLayerReady) return;
     vis.svgRoot.attr('viewBox', `0 0 ${w} ${h}`);
     vis.svgRoot.select('text').attr('x', w / 2);
     vis.svgRoot.select('.zoom-reset').attr('x', w - 10);
@@ -440,12 +485,14 @@ export default class MassDistributionMap {
     vis.path = d3.geoPath().projection(vis.projection);
     vis.svgRoot.transition().duration(0).call(vis.zoom.transform, d3.zoomIdentity);
     vis.renderVis();
-    vis.updateVis();
+    vis.updateVis().catch(() => {});
   }
 
   update(data) {
     this.data = data;
-    this.updateVis();
+    if (this.pointsLayerReady) {
+      this.updateVis().catch(() => {});
+    }
   }
 
   show() {
@@ -456,10 +503,42 @@ export default class MassDistributionMap {
     if (this.svgRoot) this.svgRoot.style('display', 'none');
   }
 
-  async render() {
-    this.initVis();
-    await this.loadWorldMap();
-    this.renderVis();
-    this.updateVis();
+  isReady() {
+    return this.pointsLayerReady;
+  }
+
+  /**
+   * Build DOM and draw points/legend once. Optional shared countries GeoJSON.
+   * Concurrent calls share the same in-flight promise.
+   * @param {object[]|null} [preloadedCountries]
+   */
+  async ensureRendered(preloadedCountries = null) {
+    const vis = this;
+    if (vis.pointsLayerReady) return;
+    if (vis.ensureRenderedPromise) {
+      await vis.ensureRenderedPromise;
+      return;
+    }
+
+    vis.ensureRenderedPromise = (async () => {
+      vis.countries = preloadedCountries != null
+        ? preloadedCountries
+        : await vis.loadWorldMap();
+
+      vis.initVis();
+      vis.renderVis();
+      await vis.updateVis();
+      vis.pointsLayerReady = true;
+    })();
+
+    try {
+      await vis.ensureRenderedPromise;
+    } finally {
+      vis.ensureRenderedPromise = null;
+    }
+  }
+
+  async render(preloadedCountries = null) {
+    await this.ensureRendered(preloadedCountries);
   }
 }
