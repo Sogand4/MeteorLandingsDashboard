@@ -165,12 +165,18 @@ export default class Task3Map {
       ]);
 
     vis.bins = vis.hexbin(projected);
-    const rawMin = d3.min(vis.bins, (b) => b.length);
-    const rawMax = d3.max(vis.bins, (b) => b.length);
-    vis.minCount = Number.isFinite(rawMin) ? rawMin : 0;
-    vis.maxCount = Number.isFinite(rawMax) ? Math.max(rawMax, vis.minCount, 1) : 1;
-    /* True when every non-empty hex has the same count (e.g. heavy filtering). */
-    vis.densityUniform = vis.minCount === vis.maxCount;
+    if (vis.bins.length === 0) {
+      vis.minCount = 0;
+      vis.maxCount = 0;
+      vis.densityUniform = true;
+    } else {
+      const rawMin = d3.min(vis.bins, (b) => b.length);
+      const rawMax = d3.max(vis.bins, (b) => b.length);
+      vis.minCount = Number.isFinite(rawMin) ? rawMin : 0;
+      vis.maxCount = Number.isFinite(rawMax) ? Math.max(rawMax, vis.minCount, 1) : 1;
+      /* True when every non-empty hex has the same count (e.g. heavy filtering). */
+      vis.densityUniform = vis.minCount === vis.maxCount;
+    }
 
     /* Log10(1+x) color scale reduces skew from hotspots */
     vis.logMin = Math.log10(1 + Math.max(0, vis.minCount));
@@ -187,20 +193,26 @@ export default class Task3Map {
     const logSpan = vis.logMax - vis.logMin;
 
     if (vis.densityUniform || logSpan <= 1e-12) {
+      vis.legendBins = 1;
       vis.densityBinColors = [vis.colorScale(vis.logMin)];
       vis.densityBinIndex = () => 0;
     } else {
-      vis.densityBinColors = d3.range(DENSITY_LEGEND_BINS).map((i) => {
-        const t0 = vis.logMin + (i / DENSITY_LEGEND_BINS) * logSpan;
-        const t1 = vis.logMin + ((i + 1) / DENSITY_LEGEND_BINS) * logSpan;
+      vis.legendBins = Math.max(
+        2,
+        Math.min(DENSITY_LEGEND_BINS, Math.max(1, vis.maxCount - vis.minCount + 1)),
+      );
+      const binsN = vis.legendBins;
+      vis.densityBinColors = d3.range(binsN).map((i) => {
+        const t0 = vis.logMin + (i / binsN) * logSpan;
+        const t1 = vis.logMin + ((i + 1) / binsN) * logSpan;
         return vis.colorScale((t0 + t1) / 2);
       });
       vis.densityBinIndex = (logVal) => {
         const span = vis.logMax - vis.logMin;
         const u = (logVal - vis.logMin) / span;
         return Math.min(
-          DENSITY_LEGEND_BINS - 1,
-          Math.max(0, Math.floor(u * DENSITY_LEGEND_BINS)),
+          binsN - 1,
+          Math.max(0, Math.floor(u * binsN)),
         );
       };
     }
@@ -373,6 +385,7 @@ export default class Task3Map {
     const logLo = vis.logMin;
     const logHi = vis.logMax;
     const logSpan = logHi - logLo;
+    const binsN = vis.legendBins || (vis.densityUniform ? 1 : DENSITY_LEGEND_BINS);
     const barWidth = 20;
     const barHeight = 18;
     const labelOffset = 28;
@@ -385,9 +398,12 @@ export default class Task3Map {
     /**
      * Integers k with log10(1+k) in [t0, t1) — same rule as partitioning the color axis.
      */
-    const countRangeForLogSlice = (t0, t1) => {
+    const countRangeForLogSlice = (t0, t1, inclusiveUpper = false) => {
       const kMin = Math.max(0, Math.ceil(countAtLog(t0) - 1e-9));
-      const kMax = Math.floor(countAtLog(t1) - 1e-9);
+      // Most slices are [t0, t1); the final legend slice should include the upper endpoint.
+      const kMax = inclusiveUpper
+        ? Math.floor(countAtLog(t1) + 1e-9)
+        : Math.floor(countAtLog(t1) - 1e-9);
       return { kMin, kMax };
     };
 
@@ -399,22 +415,45 @@ export default class Task3Map {
         label: safeMin === safeMax ? fmt(safeMin) : `${fmt(safeMin)}–${fmt(safeMax)}`,
       });
     } else {
-      for (let i = 0; i < DENSITY_LEGEND_BINS; i++) {
-        const t0 = logLo + (i / DENSITY_LEGEND_BINS) * logSpan;
-        const t1 = logLo + ((i + 1) / DENSITY_LEGEND_BINS) * logSpan;
-        const { kMin, kMax } = countRangeForLogSlice(t0, t1);
-        let label;
+      const slices = [];
+      for (let i = 0; i < binsN; i++) {
+        const t0 = logLo + (i / binsN) * logSpan;
+        const t1 = logLo + ((i + 1) / binsN) * logSpan;
+        const { kMin, kMax } = countRangeForLogSlice(t0, t1, i === binsN - 1);
         if (kMax < kMin) {
           const mid = (t0 + t1) / 2;
           const approx = Math.max(0, Math.round(countAtLog(mid)));
-          label = fmt(approx);
-        } else if (kMin === kMax) {
-          label = fmt(kMin);
+          slices.push({
+            t0,
+            t1,
+            kMin: approx,
+            kMax: approx,
+          });
         } else {
-          label = `${fmt(kMin)}–${fmt(kMax)}`;
+          slices.push({
+            t0,
+            t1,
+            kMin,
+            kMax,
+          });
         }
-        rows.push({ t0, t1, label });
       }
+
+      // Merge adjacent slices that map to the same integer label/range.
+      const merged = slices.reduce((acc, s) => {
+        const last = acc[acc.length - 1];
+        if (last && last.kMin === s.kMin && last.kMax === s.kMax) {
+          last.t1 = s.t1;
+          return acc;
+        }
+        acc.push({ ...s });
+        return acc;
+      }, []);
+
+      merged.forEach((m) => {
+        const label = m.kMin === m.kMax ? fmt(m.kMin) : `${fmt(m.kMin)}–${fmt(m.kMax)}`;
+        rows.push({ t0: m.t0, t1: m.t1, label });
+      });
     }
 
     const legendHeight = 25 + rows.length * barHeight;
@@ -441,16 +480,16 @@ export default class Task3Map {
       .attr('font-size', 9)
       .attr('fill', '#666')
       .text(
-        rows.length <= 1
-          ? '(count per hexbin, log scale)'
-          : `(count per hexbin, log scale · ${DENSITY_LEGEND_BINS} discrete colors)`,
+        '(count per hexbin, log scale)',
       );
 
     rows.forEach((row, i) => {
       const y = 18 + i * barHeight;
-      const fill = vis.densityBinColors && vis.densityBinColors[i] != null
-        ? vis.densityBinColors[i]
-        : vis.colorScale((row.t0 + row.t1) / 2);
+      const midLog = (row.t0 + row.t1) / 2;
+      const idx = vis.densityBinIndex ? vis.densityBinIndex(midLog) : null;
+      const fill = idx != null && vis.densityBinColors && vis.densityBinColors[idx] != null
+        ? vis.densityBinColors[idx]
+        : vis.colorScale(midLog);
 
       legend
         .append('rect')
