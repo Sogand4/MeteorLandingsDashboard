@@ -9,5 +9,7 @@ The dashboard supports **exploratory analysis**: users compare how meteorite **c
 **Intended audience:** students, educators, and curious learners interested in astronomy, Earth science, geography, or data visualization. This is **not** a tool for professional hazard prediction or rigorous scientific inference; it is meant for **learning**, **exploration**, and **intuitive understanding** of the dataset through interaction.
 
 ![Dashboard thumbnail](./assets/thumbnail.png)
+
 Video Demo can be found [here](https://drive.google.com/file/d/1gQI2x26s1JXFwn726BT48LCE-D9KGd2f/view?usp=sharing)
+
 Final report can be found [here](https://docs.google.com/document/d/1pMWxk9A9WuZOnFW3_ayhvLLlNNT1Y-T41n0ElwKEDy4/edit?tab=t.0)
